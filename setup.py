@@ -79,7 +79,6 @@ setup(
     zipfile = None,
     windows = [spraygen],
     data_files=[
-			(".",['spraygen.xml','instructions.txt']),
-			("imagemagick",['imagemagick\identify.exe','imagemagick\convert.exe'])
+			(".",['spraygen.xml','instructions.txt','test.gif']),
 			]
     )
