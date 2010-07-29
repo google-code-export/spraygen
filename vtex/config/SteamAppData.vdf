@@ -1,0 +1,11 @@
+"SteamAppData"
+{
+	"RememberPassword"		"1"
+	"AutoLoginUser"		"testuser"
+	"testuser"
+	{
+		"User"		"testuser"
+		"AccountCreated"		"1"
+		"ShowNotifyTrayHintDialog"		"0"
+	}
+}
