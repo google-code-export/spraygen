@@ -112,8 +112,7 @@ class mainwindow:
         self.builder.get_object("width"+str(self.vtfwidth)).set_active(1)
 
     def sizechanged(self, object):  # buttons pressed, set values
-        self.filename = self.builder.get_object("filechooserbutton1").get_filename()                           # pull filename from dialog
-        if self.filename==None:
+        if self.builder.get_object("filechooserbutton1").get_filename()==None:
             return
         if object.name.find("width")==0:
             self.vtfwidth=int(object.get_label())
@@ -149,7 +148,7 @@ class mainwindow:
         gamefolder = steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf"
         # check if steam is running
         out = string.join(os.popen('tasklist').readlines())
-        if out.find("Steam")>-1:
+        if out.lower().find("steam.exe")>-1:
             pass # steam is running
         else:
             md = gtk.MessageDialog(self.builder.get_object("window1"), 
