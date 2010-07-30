@@ -2,6 +2,7 @@
 import pygtk
 import gtk
 import os
+#import time
 #import sys
 import string
 from _winreg import ConnectRegistry, OpenKey, HKEY_CURRENT_USER, QueryValueEx
@@ -216,23 +217,23 @@ class mainwindow:
                 os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
                 framecount = framecount + everynthframe #advance to next frame
                 framecounter = framecounter + 1
-        if tf2check:
-            pass
-        if csscheck:
-            pass
-        if l4dcheck:
-            pass
-        if l4d2check:
-            pass
-        # os.rename("vtex\gameinfo-css.txt","vtex\gameinfo.txt") #support for CSS or other source games?
-        out = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
-        # os.rename("vtex\gameinfo.txt","vtex\gameinfo-css.txt")
-        # print out #debug output
+                
         vtfname=os.path.basename(self.builder.get_object("filechooserbutton1").get_filename()) # name of vtf without the path
-        inputbasename=vtfname.rstrip(".gif") # filename without .gif extension
+        vmtname=vtfname.rstrip(".gif") + ".vmt"
         vtfname=vtfname.rstrip(".gif") + ".vtf"
         
         for gamefolder in gamefolderlist:
+            if gamefolder.find("\\tf2")>-1: # copy the correct gameinfo.txt for the vtex compiler to use, seems game-specific
+                output=os.popen(r'copy /y vtex\tf2gameinfo.txt vtex\gameinfo.txt')
+            if gamefolder.find("\\left4dead2")>-1:
+                output=os.popen(r'copy /y vtex\l4d2gameinfo.txt vtex\gameinfo.txt')
+            elif gamefolder.find("\\left4dead")>-1:
+                output=os.popen(r'copy /y vtex\l4dgameinfo.txt vtex\gameinfo.txt')
+            if gamefolder.find("\\css")>-1:
+                output=os.popen(r'copy /y vtex\cssgameinfo.txt vtex\gameinfo.txt')
+                
+            out = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
+
             if os.path.exists(gamefolder+"\\materials\\vgui\logos\\" + vtfname): # if the file of the same name exists, in the game folder
                 if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
                     os.unlink(gamefolder+"\\materials\\vgui\logos\\" + vtfname) # delete the destination file of the same name, in the game folder
@@ -240,9 +241,11 @@ class mainwindow:
             if os.path.exists(gamefolder+r"\materials\vgui\logos\ui")!=True: 
                 os.makedirs(gamefolder+r"\materials\vgui\logos\ui") # create vgui folder if it doesn't exist
     
-            output=os.popen(r'copy vtex\materials\vgui\logos\output.vtf "'+gamefolder+r'\materials\vgui\logos\\' + vtfname + '"') # copy the file into the game folder
+            output=os.rename(r'vtex\materials\vgui\logos\output.vtf', gamefolder+r"\materials\vgui\logos\\" + vtfname) # copy the file into the game folder
+            # output=os.popen(r'copy vtex\materials\vgui\logos\\'+vtfname+' "'+gamefolder+r"\materials\vgui\logos\\" + vtfname + '"') # copy the file into the game folder
             
-            vmt1 = open(gamefolder + r"\materials\vgui\logos\\" + inputbasename + ".vmt", "w+")
+            #time.sleep(1)
+            vmt1 = open(gamefolder + r"\materials\vgui\logos\\" + vmtname, "w+")
             vmt1.write('LightmappedGeneric\n')
             vmt1.write('{\n')
             vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
@@ -252,7 +255,7 @@ class mainwindow:
             vmt1.write('}\n')
             vmt1.close()
     
-            vmt2 = open(gamefolder + r"\materials\vgui\logos\ui\\" + inputbasename + ".vmt", "w+")
+            vmt2 = open(gamefolder + r"\materials\vgui\logos\ui\\" + vmtname, "w+")
             vmt2.write('"UnlitGeneric"\n')
             vmt2.write('{\n')
             vmt2.write('    "$translucent" 1\n')
@@ -266,7 +269,7 @@ class mainwindow:
 
             # launch explorer after installation to see how messy the game folder is
             os.spawnl(os.P_NOWAIT,"c:\windows\explorer.exe", "explorer", gamefolder + r"\materials\vgui\logos")
-        os.unlink("vtex\materials\vgui\logos\output.vtf")
+            #os.unlink(r"vtex\materials\vgui\logos\output.vtf")
 
 # show main window
 frm = mainwindow()
