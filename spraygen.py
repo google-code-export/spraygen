@@ -7,6 +7,9 @@ import string
 from _winreg import ConnectRegistry, OpenKey, HKEY_CURRENT_USER, QueryValueEx
 from math import log, floor
 
+steamnames=""
+steamfolder=""
+gamefolder=""
 workingdir = os.getcwd()
 magicnumber = 180224 # max size for TGAs in VTF
 
@@ -45,19 +48,45 @@ class mainwindow:
     builder = gtk.Builder()
     builder.add_from_file("spraygen.xml")
     def __init__(self):
+        global steamnames, gamefolder, steamfolder
         self.window = self.builder.get_object("window1")
         # stop program when window closes
         dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected }
         self.builder.connect_signals(dic)
-        filefilter = gtk.FileFilter()
+        filefilter = gtk.FileFilter() # file pattern filter for dialog
         filefilter.add_pattern("*.gif")
         self.builder.get_object("filechooserbutton1").set_filter(filefilter)
         dirlist = os.listdir("TGA") # clean out old targas
-        tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")>-1]
+        tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         for tganame in tgalist:
             os.unlink("TGA\\" + tganame)
-        # register imagemagick
-        #os.popen(r"regedit /s imagemagick\imagemagick.reg")
+        #figure out game folder
+        registryobj = ConnectRegistry(None,HKEY_CURRENT_USER)
+        keyobj = OpenKey(registryobj, r"software\valve\steam") 
+        valuetuple = QueryValueEx(keyobj, "steampath")
+        steamfolder = valuetuple[0].replace("/","\\")+"\\steamapps"
+        dirlist = os.listdir(steamfolder) # 
+        steamnamelist = [steamname for steamname in dirlist if os.path.isdir(steamfolder+"\\"+steamname)]
+        steamnamelist.remove("SourceMods") # remove the expected folders
+        steamnamelist.remove("common") # left with a list of steam usernames?  maybe?
+        combobox1=self.builder.get_object("combobox1")
+        liststore = gtk.ListStore(str)
+        cell = gtk.CellRendererText()
+        combobox1.set_model(liststore)
+        combobox1.pack_start(cell, True)
+        combobox1.add_attribute(cell, 'text', 0)
+        liststore1=self.builder.get_object("liststore1")
+        for steamname in steamnamelist:
+            combobox1.append_text(steamname)
+            #print steamname
+        combobox1.set_active(0)
+        #print steamnamelist
+        steamfolder = valuetuple[0].replace("/","\\")
+        gamefolder = steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf"
+        # valuetuple2 = QueryValueEx(keyobj, "lastgamenameused") # this failed
+        # HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\uninstall\steam app 440 # fails if game isn't installed # 240 for CSS
+        # installlocation     REG_SZ  d:\games\steam\steamapps\xenoguy\team fortress 2
+        # gamefolder=r"D:\games\steam\steamapps\xenoguy\team fortress 2\tf"
 
     def fileselected(self, object):
         self.transparency = 1   # default to no transparency, transparency on = 2
@@ -114,11 +143,23 @@ class mainwindow:
         self.builder.get_object("label4").set_label("Frames in VTF: "+ str(self.vtfframes))
 
     def convert(self, object):
+        global gamefolder
+        combobox1=self.builder.get_object("combobox1")
+        gamefolder = steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf"
         # check if steam is running
         out = string.join(os.popen('tasklist').readlines())
-        if out.find("Steam")>-1: pass # print "steam is running"
+        if out.find("Steam")>-1:
+            pass # steam is running
+        else:
+            md = gtk.MessageDialog(self.builder.get_object("window1"), 
+                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
+                gtk.BUTTONS_CLOSE, "Steam is not running, please start Steam before creating a spray")
+            md.run()
+            md.destroy()
+            return
+        
         # create exception here if the size is to big to create any frames.
-        if self.vtfframes == 0:
+        if self.vtfframes == 0: # if it has no frames, exit
             return
         spliceleft = 0
         splicetop = 0
@@ -130,7 +171,8 @@ class mainwindow:
         # clean out folder before putting new tgas in
         filelist = os.listdir(r"vtex\materialsrc\vgui\logos")
         for filename in filelist:
-            os.unlink(r"vtex\materialsrc\vgui\logos\\"+filename)
+            if filename != ".svn":
+                os.unlink(r"vtex\materialsrc\vgui\logos\\"+filename)
             
         vtextext = open(r"vtex\materialsrc\vgui\logos\output.txt", "w+")
         vtextext.write('"Startframe" "0"\n')
@@ -138,11 +180,10 @@ class mainwindow:
         vtextext.close()
         
         everynthframe = 1 # by default, take every frame
-        if self.vtfframes < self.fileframes:
-            # cut some frames out
+        if self.vtfframes < self.fileframes: # cut some frames out
             everynthframe = float(self.fileframes)/float(self.vtfframes)
         if self.transparency==2: background="-background transparent -bordercolor transparent " # pass this string to convert.exe if transparency is enabled
-        else: background="-alpha deactivate "
+        else: background="-alpha deactivate " # no transparency, no alpha channel. room for more frames.
         tempw = self.filewidth/float(self.vtfwidth)
         temph = self.fileheight/float(self.vtfheight)
         if temph > tempw:
@@ -162,44 +203,31 @@ class mainwindow:
         os.popen('imagemagick\convert +adjoin -coalesce "' + self.filename + '" TGA\output.tga') # output .tgas
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
-        natsort(tgalist)
+        natsort(tgalist) # natural sort the TGA list to get them in the right order
         for tganame in tgalist:
-            # process only the frames you need, speeding things up
-            if tganame.find("-" + str(int(round(framecount)))) > -1:
+            if tganame.find("-" + str(int(round(framecount)))) > -1: # process only the frames you need, speeding things up
                 os.popen("imagemagick\convert -resize " + str(self.vtfwidth) + "x" + str(self.vtfheight) + " TGA\\" + tganame + " TGA\\" + tganame)
                 os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " TGA\\" + tganame + " TGA\\" + tganame)
-                # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame
+                # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame #debug output
                 os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
-                framecount = framecount + everynthframe
+                framecount = framecount + everynthframe #advance to next frame
                 framecounter = framecounter + 1
-        # os.rename("vtex\gameinfo-css.txt","vtex\gameinfo.txt")
+        # os.rename("vtex\gameinfo-css.txt","vtex\gameinfo.txt") #support for CSS or other source games?
         out = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
         # os.rename("vtex\gameinfo.txt","vtex\gameinfo-css.txt")
-        # print out
-        vtfname=os.path.basename(self.filename)
-        inputbasename=vtfname.rstrip(".gif")
+        # print out #debug output
+        vtfname=os.path.basename(self.filename) # name of vtf without the path
+        inputbasename=vtfname.rstrip(".gif") # filename without .gif extension
         vtfname=vtfname.rstrip(".gif") + ".vtf"
-        #figure out game folder
-        registryobj = ConnectRegistry(None,HKEY_CURRENT_USER)
-        keyobj = OpenKey(registryobj, r"software\valve\steam") # 240 for CSS
-        valuetuple = QueryValueEx(keyobj, "steampath")
-        valuetuple2 = QueryValueEx(keyobj, "lastgamenameused")
-        gamefolder = valuetuple[0].replace("/","\\") + "\\steamapps\\" + valuetuple2[0] + "\\team fortress 2\\tf"
-        # HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\uninstall\steam app 440
-        # installlocation     REG_SZ  d:\games\steam\steamapps\xenoguy\team fortress 2
-        # gamefolder=r"D:\games\steam\steamapps\xenoguy\team fortress 2\tf"
         
-        if os.path.exists(gamefolder+"\\materials\\vgui\logos\\" + vtfname):
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"):
-                os.unlink(gamefolder+"\\materials\\vgui\logos\\" + vtfname)
+        if os.path.exists(gamefolder+"\\materials\\vgui\logos\\" + vtfname): # if the file of the same name exists, in the game folder
+            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                os.unlink(gamefolder+"\\materials\\vgui\logos\\" + vtfname) # delete the destination file of the same name, in the game folder
 
-        # create folder if it doesn't exist
-        if os.path.exists(gamefolder+r"\materials\vgui\logos\ui")!=True:
-            os.makedirs(gamefolder+r"\materials\vgui\logos\ui")
+        if os.path.exists(gamefolder+r"\materials\vgui\logos\ui")!=True: 
+            os.makedirs(gamefolder+r"\materials\vgui\logos\ui") # create vgui folder if it doesn't exist
 
-        # move the file into the game folder
-        os.rename("vtex\\materials\\vgui\\logos\\output.vtf",gamefolder+"\\materials\\vgui\logos\\" + vtfname)
-
+        os.rename("vtex\\materials\\vgui\\logos\\output.vtf",gamefolder+"\\materials\\vgui\logos\\" + vtfname) # move the file into the game folder
             
         vmt1 = open(gamefolder + r"\materials\vgui\logos\\" + inputbasename + ".vmt", "w+")
         vmt1.write('LightmappedGeneric\n')
