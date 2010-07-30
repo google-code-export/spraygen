@@ -1,3 +1,3 @@
-**you must have steam running for this to work**
+Project homepage: http://code.google.com/p/spraygen/
 
-send feedback to aaronwcurtis@gmail.com
+please go there for instructions, bug reports and to download the latest version

@@ -7,9 +7,7 @@ import string
 from _winreg import ConnectRegistry, OpenKey, HKEY_CURRENT_USER, QueryValueEx
 from math import log, floor
 
-steamnames=""
 steamfolder=""
-gamefolder=""
 workingdir = os.getcwd()
 magicnumber = 180224 # max size for TGAs in VTF
 
@@ -48,13 +46,14 @@ class mainwindow:
     builder = gtk.Builder()
     builder.add_from_file("spraygen.xml")
     def __init__(self):
-        global steamnames, gamefolder, steamfolder
+        global steamfolder
         self.window = self.builder.get_object("window1")
         # stop program when window closes
         dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected }
         self.builder.connect_signals(dic)
         filefilter = gtk.FileFilter() # file pattern filter for dialog
         filefilter.add_pattern("*.gif")
+        filefilter.add_pattern("*.png")
         self.builder.get_object("filechooserbutton1").set_filter(filefilter)
         dirlist = os.listdir("TGA") # clean out old targas
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
@@ -64,9 +63,9 @@ class mainwindow:
         registryobj = ConnectRegistry(None,HKEY_CURRENT_USER)
         keyobj = OpenKey(registryobj, r"software\valve\steam") 
         valuetuple = QueryValueEx(keyobj, "steampath")
-        steamfolder = valuetuple[0].replace("/","\\")+"\\steamapps"
-        dirlist = os.listdir(steamfolder) # 
-        steamnamelist = [steamname for steamname in dirlist if os.path.isdir(steamfolder+"\\"+steamname)]
+        steamfolder = valuetuple[0].replace("/","\\")
+        dirlist = os.listdir(steamfolder+"\\steamapps") #
+        steamnamelist = [steamname for steamname in dirlist if os.path.isdir(steamfolder+"\\steamapps"+"\\"+steamname)]
         steamnamelist.remove("SourceMods") # remove the expected folders
         steamnamelist.remove("common") # left with a list of steam usernames?  maybe?
         combobox1=self.builder.get_object("combobox1")
@@ -78,15 +77,7 @@ class mainwindow:
         liststore1=self.builder.get_object("liststore1")
         for steamname in steamnamelist:
             combobox1.append_text(steamname)
-            #print steamname
         combobox1.set_active(0)
-        #print steamnamelist
-        steamfolder = valuetuple[0].replace("/","\\")
-        gamefolder = steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf"
-        # valuetuple2 = QueryValueEx(keyobj, "lastgamenameused") # this failed
-        # HKEY_LOCAL_MACHINE\software\microsoft\windows\currentversion\uninstall\steam app 440 # fails if game isn't installed # 240 for CSS
-        # installlocation     REG_SZ  d:\games\steam\steamapps\xenoguy\team fortress 2
-        # gamefolder=r"D:\games\steam\steamapps\xenoguy\team fortress 2\tf"
 
     def fileselected(self, object):
         self.transparency = 1   # default to no transparency, transparency on = 2
@@ -143,9 +134,18 @@ class mainwindow:
         self.builder.get_object("label4").set_label("Frames in VTF: "+ str(self.vtfframes))
 
     def convert(self, object):
-        global gamefolder
+        global steamfolder
+        gamefolderlist=[]
         combobox1=self.builder.get_object("combobox1")
-        gamefolder = steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf"
+        tf2check=self.builder.get_object("tf2check").get_active()
+        csscheck=self.builder.get_object("csscheck").get_active()
+        l4dcheck=self.builder.get_object("L4Dcheck").get_active()
+        l4d2check=self.builder.get_object("L4D2check").get_active()
+        if tf2check: gamefolderlist.append(steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\team fortress 2\\tf")
+        if csscheck: gamefolderlist.append(steamfolder + "\\steamapps\\" + combobox1.get_active_text() + "\\counter-strike source\\cstrike")
+        if l4dcheck: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead")
+        if l4d2check: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2")
+        
         # check if steam is running
         out = string.join(os.popen('tasklist').readlines())
         if out.lower().find("steam.exe")>-1:
@@ -212,6 +212,14 @@ class mainwindow:
                 os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
                 framecount = framecount + everynthframe #advance to next frame
                 framecounter = framecounter + 1
+        if tf2check:
+            pass
+        if csscheck:
+            pass
+        if l4dcheck:
+            pass
+        if l4d2check:
+            pass
         # os.rename("vtex\gameinfo-css.txt","vtex\gameinfo.txt") #support for CSS or other source games?
         out = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
         # os.rename("vtex\gameinfo.txt","vtex\gameinfo-css.txt")
@@ -220,39 +228,40 @@ class mainwindow:
         inputbasename=vtfname.rstrip(".gif") # filename without .gif extension
         vtfname=vtfname.rstrip(".gif") + ".vtf"
         
-        if os.path.exists(gamefolder+"\\materials\\vgui\logos\\" + vtfname): # if the file of the same name exists, in the game folder
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                os.unlink(gamefolder+"\\materials\\vgui\logos\\" + vtfname) # delete the destination file of the same name, in the game folder
-
-        if os.path.exists(gamefolder+r"\materials\vgui\logos\ui")!=True: 
-            os.makedirs(gamefolder+r"\materials\vgui\logos\ui") # create vgui folder if it doesn't exist
-
-        os.rename("vtex\\materials\\vgui\\logos\\output.vtf",gamefolder+"\\materials\\vgui\logos\\" + vtfname) # move the file into the game folder
+        for gamefolder in gamefolderlist:
+            if os.path.exists(gamefolder+"\\materials\\vgui\logos\\" + vtfname): # if the file of the same name exists, in the game folder
+                if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                    os.unlink(gamefolder+"\\materials\\vgui\logos\\" + vtfname) # delete the destination file of the same name, in the game folder
+    
+            if os.path.exists(gamefolder+r"\materials\vgui\logos\ui")!=True: 
+                os.makedirs(gamefolder+r"\materials\vgui\logos\ui") # create vgui folder if it doesn't exist
+    
+            output=os.popen(r'copy vtex\materials\vgui\logos\output.vtf "'+gamefolder+r'\materials\vgui\logos\\' + vtfname + '"') # copy the file into the game folder
             
-        vmt1 = open(gamefolder + r"\materials\vgui\logos\\" + inputbasename + ".vmt", "w+")
-        vmt1.write('LightmappedGeneric\n')
-        vmt1.write('{\n')
-        vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
-        vmt1.write('    "$translucent" "1"\n')
-        vmt1.write('    "$decal" "1"\n')
-        vmt1.write('    "$decalscale" "0.250"\n')
-        vmt1.write('}\n')
-        vmt1.close()
+            vmt1 = open(gamefolder + r"\materials\vgui\logos\\" + inputbasename + ".vmt", "w+")
+            vmt1.write('LightmappedGeneric\n')
+            vmt1.write('{\n')
+            vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
+            vmt1.write('    "$translucent" "1"\n')
+            vmt1.write('    "$decal" "1"\n')
+            vmt1.write('    "$decalscale" "0.250"\n')
+            vmt1.write('}\n')
+            vmt1.close()
+    
+            vmt2 = open(gamefolder + r"\materials\vgui\logos\ui\\" + inputbasename + ".vmt", "w+")
+            vmt2.write('"UnlitGeneric"\n')
+            vmt2.write('{\n')
+            vmt2.write('    "$translucent" 1\n')
+            vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
+            vmt2.write('    "$vertexcolor" 1\n')
+            vmt2.write('    "$vertexalpha" 1\n')
+            vmt2.write('    "$no_fullbright" 1\n')
+            vmt2.write('    "$ignorez" 1\n')
+            vmt2.write('}\n')
+            vmt2.close()
 
-        vmt2 = open(gamefolder + r"\materials\vgui\logos\ui\\" + inputbasename + ".vmt", "w+")
-        vmt2.write('"UnlitGeneric"\n')
-        vmt2.write('{\n')
-        vmt2.write('    "$translucent" 1\n')
-        vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
-        vmt2.write('    "$vertexcolor" 1\n')
-        vmt2.write('    "$vertexalpha" 1\n')
-        vmt2.write('    "$no_fullbright" 1\n')
-        vmt2.write('    "$ignorez" 1\n')
-        vmt2.write('}\n')
-        vmt2.close()
-
-        # launch explorer after installation to see how messy the game folder is
-        os.spawnl(os.P_NOWAIT,"c:\windows\explorer.exe", "explorer", gamefolder + r"\materials\vgui\logos")
+            # launch explorer after installation to see how messy the game folder is
+            os.spawnl(os.P_NOWAIT,"c:\windows\explorer.exe", "explorer", gamefolder + r"\materials\vgui\logos")
 
 # show main window
 frm = mainwindow()
