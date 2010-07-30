@@ -47,6 +47,7 @@ class mainwindow:
     builder.add_from_file("spraygen.xml")
     def __init__(self):
         global steamfolder
+        self.vtfframes=0
         self.window = self.builder.get_object("window1")
         # stop program when window closes
         dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected }
@@ -67,7 +68,7 @@ class mainwindow:
         dirlist = os.listdir(steamfolder+"\\steamapps") #
         steamnamelist = [steamname for steamname in dirlist if os.path.isdir(steamfolder+"\\steamapps"+"\\"+steamname)]
         steamnamelist.remove("SourceMods") # remove the expected folders
-        steamnamelist.remove("common") # left with a list of steam usernames?  maybe?
+        steamnamelist.remove("common") # left with a list of steam usernames, in theory
         combobox1=self.builder.get_object("combobox1")
         liststore = gtk.ListStore(str)
         cell = gtk.CellRendererText()
@@ -146,6 +147,9 @@ class mainwindow:
         if l4dcheck: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead")
         if l4d2check: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2")
         
+        if self.builder.get_object("filechooserbutton1").get_filename()==None:
+            return
+        
         # check if steam is running
         out = string.join(os.popen('tasklist').readlines())
         if out.lower().find("steam.exe")>-1:
@@ -200,7 +204,7 @@ class mainwindow:
             splicetop = 1
         if spliceleft or splicetop:
             splicestring = "-splice " + str(spliceleft) + "x" + str(splicetop)+ " "
-        os.popen('imagemagick\convert +adjoin -coalesce "' + self.filename + '" TGA\output.tga') # output .tgas
+        os.popen('imagemagick\convert +adjoin -coalesce "' + self.builder.get_object("filechooserbutton1").get_filename() + '" TGA\output.tga') # output .tgas
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
@@ -224,7 +228,7 @@ class mainwindow:
         out = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
         # os.rename("vtex\gameinfo.txt","vtex\gameinfo-css.txt")
         # print out #debug output
-        vtfname=os.path.basename(self.filename) # name of vtf without the path
+        vtfname=os.path.basename(self.builder.get_object("filechooserbutton1").get_filename()) # name of vtf without the path
         inputbasename=vtfname.rstrip(".gif") # filename without .gif extension
         vtfname=vtfname.rstrip(".gif") + ".vtf"
         
@@ -262,6 +266,7 @@ class mainwindow:
 
             # launch explorer after installation to see how messy the game folder is
             os.spawnl(os.P_NOWAIT,"c:\windows\explorer.exe", "explorer", gamefolder + r"\materials\vgui\logos")
+        os.unlink("vtex\materials\vgui\logos\output.vtf")
 
 # show main window
 frm = mainwindow()
