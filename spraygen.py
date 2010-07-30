@@ -112,6 +112,7 @@ class mainwindow:
         self.builder.get_object("width"+str(self.vtfwidth)).set_active(1)
 
     def sizechanged(self, object):  # buttons pressed, set values
+        self.filename = self.builder.get_object("filechooserbutton1").get_filename()                           # pull filename from dialog
         if self.filename==None:
             return
         if object.name.find("width")==0:
