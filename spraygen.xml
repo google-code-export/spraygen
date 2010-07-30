@@ -265,11 +265,29 @@ Frames:</property>
             <property name="height_request">12</property>
             <property name="visible">True</property>
             <child>
-              <object class="GtkLabel" id="label1">
+              <object class="GtkVBox" id="vbox6">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Steam Account</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label1">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Steam Account</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="padding">3</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
+                <property name="expand">False</property>
                 <property name="position">0</property>
               </packing>
             </child>
@@ -285,6 +303,7 @@ Frames:</property>
                     <property name="visible">True</property>
                   </object>
                   <packing>
+                    <property name="expand">False</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -301,9 +320,6 @@ Frames:</property>
             <property name="left_attach">2</property>
             <property name="right_attach">3</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
         <child>
           <object class="GtkVBox" id="vbox1">
@@ -359,6 +375,9 @@ Frames:</property>
               </packing>
             </child>
           </object>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
     </child>
