@@ -1,2 +1,0 @@
-"Startframe" "0"
-"endframe" "13"
