@@ -302,10 +302,9 @@ class mainwindow:
             chooser.set_current_name(vtfname)
             response = chooser.run()
             if response == gtk.RESPONSE_OK:
-                #output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "' + dialog.get_filename() + '"')
-                print chooser.get_filename()
+                output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "' + chooser.get_filename() + '"')
             elif response == gtk.RESPONSE_CANCEL:
-                 pass
+                pass
             chooser.destroy()
 
 # show main window

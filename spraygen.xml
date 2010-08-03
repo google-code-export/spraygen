@@ -5,7 +5,7 @@
   <object class="GtkWindow" id="window1">
     <property name="visible">True</property>
     <property name="has_focus">True</property>
-    <property name="title" translatable="yes">Spraygen 1.1</property>
+    <property name="title" translatable="yes">Spraygen 1.2.3</property>
     <property name="window_position">center</property>
     <property name="default_width">600</property>
     <property name="default_height">250</property>
