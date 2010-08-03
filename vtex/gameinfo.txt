@@ -1,22 +1,54 @@
 "GameInfo"
 {
-	game	"Team Fortress 2"
-	gamelogo 1
+	game	"Left 4 Dead"	// Window title
 	type multiplayer_only
 	nomodels 1
 	nohimodel 1
-	nocrosshair 0
+	l4dcrosshair 1
 	hidden_maps
 	{
-		"test_speakers"		1
-		"test_hardware"		1
+		"test_speakers"			1
+		"test_hardware"			1
+
+		"l4d_farm02_traintunnel"	1
+		"l4d_farm03_bridge"		1
+		"l4d_farm04_barn"		1
+		"l4d_farm05_cornfield"		1
+
+		"l4d_smalltown02_drainage"	1
+		"l4d_smalltown03_ranchhouse"	1
+		"l4d_smalltown04_mainstreet"	1
+		"l4d_smalltown05_houseboat"	1
+		
+		"l4d_airport02_offices"		1
+		"l4d_airport03_garage"		1
+		"l4d_airport04_terminal"	1
+		"l4d_airport05_runway"		1
+
+		"l4d_hospital02_subway"		1
+		"l4d_hospital03_sewers"		1
+		"l4d_hospital04_interior"	1
+		"l4d_hospital05_rooftop"	1
+
+		"l4d_vs_hospital02_subway"		1
+		"l4d_vs_hospital03_sewers"		1
+		"l4d_vs_hospital04_interior"	1
+		"l4d_vs_hospital05_rooftop"	1
+
+		"slots_hospital02_subway"	1
+		"slots_hospital03_sewers"	1
+		"slots_hospital04_interior"	1
+		"slots_hospital05_rooftop"	1
+
 	}
 	nodegraph 0
-
+	perfwizard 0
+	SupportsXbox360 1
+	SupportsDX8	0
 
 	FileSystem
 	{
-		SteamAppId				440		// This will mount all the GCFs we need (240=CS:S, 220=HL2).
+		SteamAppId				500		// This will mount all the GCFs we need (240=CS:S, 220=HL2).
 		ToolsAppId				211		// Tools will load this (ie: source SDK caches) to get things like materials\debug, materials\editor, etc.
 		
 		//
@@ -40,8 +72,8 @@
 		SearchPaths
 		{
 			Game				|gameinfo_path|.
-			Game				tf
-			Game				|all_source_engine_paths|hl2
+			Game				left4dead
+			Game				hl2
 		}
 	}
 }

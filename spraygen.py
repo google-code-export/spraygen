@@ -22,8 +22,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-#sys.stdout = open("spraygen.log", "w")
-#sys.stderr = open("spraygenerr.log", "w")
+sys.stdout = open("spraygen.log", "w")
+sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -272,29 +272,63 @@ class mainwindow:
                 gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
         if csscheck:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname)
-                f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\config.cfg", 'w')
-                f.write(newfilecontents)
-                f.close()                
+                try:
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'r')
+                    filecontents=f.read()
+                    f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass              
                 gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
         if l4dcheck:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname)
-                f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\config.cfg", 'w')
-                f.write(newfilecontents)
-                f.close()
+                try:
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'r')
+                    filecontents=f.read()
+                    f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\custom\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass 
                 gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
         if l4d2check:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\config.cfg", 'r')
-                filecontents=f.read()
-                f.close()
-                match=line1.search(filecontents)
-                if match:
-                    newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname)
-                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\config.cfg", 'w')
-                    f.write(newfilecontents)
+                try:
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'r')
+                    filecontents=f.read()
                     f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\custom\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass 
                 gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
         
         for gamefolder in gamefolderlist:
