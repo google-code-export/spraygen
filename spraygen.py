@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import pygtk
 import gtk
+import re
 import os
 #import time
 import sys
@@ -21,8 +22,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-sys.stdout = open("spraygen.log", "w")
-sys.stderr = open("spraygenerr.log", "w")
+#sys.stdout = open("spraygen.log", "w")
+#sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -171,20 +172,9 @@ class mainwindow:
         cleanup() # clean up the junk
         gamefolderlist=[]
         username=""
-        username=builder.get_object("combobox1").get_active_text()
-        tf2check=builder.get_object("tf2check").get_active()
-        csscheck=builder.get_object("csscheck").get_active()
-        l4dcheck=builder.get_object("L4Dcheck").get_active()
-        l4d2check=builder.get_object("L4D2check").get_active()
-        savecheck=builder.get_object("savecheck").get_active()
-        if tf2check: gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
-        if csscheck: gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
-        if l4dcheck: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
-        if l4d2check: gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
-        
         if filename==None:
             return
-        
+       
         # check if steam is running
         out = string.join(os.popen('tasklist').readlines())
         if out.lower().find("steam.exe")>-1:
@@ -251,17 +241,63 @@ class mainwindow:
         vtfname=vtfname.rstrip(".gif") + ".vtf"
 
         output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
+        print output
+
+        username=builder.get_object("combobox1").get_active_text()
+        tf2check=builder.get_object("tf2check").get_active()
+        csscheck=builder.get_object("csscheck").get_active()
+        l4dcheck=builder.get_object("L4Dcheck").get_active()
+        l4d2check=builder.get_object("L4D2check").get_active()
+        savecheck=builder.get_object("savecheck").get_active()
+        line1 = re.compile(r'cl_logofile "(.*)"')
+        if tf2check:
+            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                try:
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'r')
+                    filecontents=f.read()
+                    f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass
+                gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
+        if csscheck:
+            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname)
+                f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\config.cfg", 'w')
+                f.write(newfilecontents)
+                f.close()                
+                gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
+        if l4dcheck:
+            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname)
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\config.cfg", 'w')
+                f.write(newfilecontents)
+                f.close()
+                gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
+        if l4d2check:
+            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\config.cfg", 'r')
+                filecontents=f.read()
+                f.close()
+                match=line1.search(filecontents)
+                if match:
+                    newfilecontents = filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname)
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\config.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+                gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
         
         for gamefolder in gamefolderlist:
-            #if gamefolder.find("\\tf2")>-1: # copy the correct gameinfo.txt for the vtex compiler to use, seems game-specific
-            #    output=os.popen(r'copy /y vtex\tf2gameinfo.txt vtex\gameinfo.txt')
-            #if gamefolder.find("\\left4dead2")>-1:
-            #    output=os.popen(r'copy /y vtex\l4d2gameinfo.txt vtex\gameinfo.txt')
-            #elif gamefolder.find("\\left4dead")>-1:
-            #    output=os.popen(r'copy /y vtex\l4dgameinfo.txt vtex\gameinfo.txt')
-            #if gamefolder.find("\\css")>-1:
-            #    output=os.popen(r'copy /y vtex\cssgameinfo.txt vtex\gameinfo.txt')
-                
             if os.path.exists(gamefolder + vtfname): # if the file of the same name exists, in the game folder
                 if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
                     os.unlink(gamefolder + vtfname) # delete the destination file of the same name, in the game folder
