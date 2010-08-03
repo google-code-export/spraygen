@@ -22,8 +22,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-sys.stdout = open("spraygen.log", "w")
-sys.stderr = open("spraygenerr.log", "w")
+#sys.stdout = open("spraygen.log", "w")
+#sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -241,7 +241,8 @@ class mainwindow:
         vtfname=vtfname.rstrip(".gif") + ".vtf"
 
         output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
-        print output
+        #print output
+
 
         username=builder.get_object("combobox1").get_active_text()
         tf2check=builder.get_object("tf2check").get_active()
@@ -337,7 +338,11 @@ class mainwindow:
                     os.unlink(gamefolder + vtfname) # delete the destination file of the same name, in the game folder
     
             if os.path.exists(gamefolder + r"\ui")!=True: 
-                os.makedirs(gamefolder + r"\ui") # create vgui folder if it doesn't exist
+                if gamefolder.find("\\left4dead"):
+                    if os.path.exists(gamefolder + r"\..\ui")!=True:
+                        os.makedirs(gamefolder + r"\..\ui") # create vgui folder if it doesn't exist
+                else:
+                    os.makedirs(gamefolder + r"\ui") # create vgui folder if it doesn't exist
     
             output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "'+ gamefolder + vtfname + '"')
             #output=os.rename(r'vtex\materials\vgui\logos\output.vtf', gamefolder + vtfname) # copy the file into the game folder
@@ -346,18 +351,27 @@ class mainwindow:
             vmt1 = open(gamefolder + vmtname, "w+")
             vmt1.write('LightmappedGeneric\n')
             vmt1.write('{\n')
-            vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
+            if gamefolder.find("\\left4dead"):
+                vmt1.write('    "$basetexture"	"vgui\logos\custom\\' + vtfname + '"\n')
+            else:
+                vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
             vmt1.write('    "$translucent" "1"\n')
             vmt1.write('    "$decal" "1"\n')
             vmt1.write('    "$decalscale" "0.250"\n')
             vmt1.write('}\n')
             vmt1.close()
     
-            vmt2 = open(gamefolder + r"\ui\\" + vmtname, "w+")
+            if gamefolder.find("\\left4dead"):
+                vmt2 = open(gamefolder + r"\..\ui\\" + vmtname, "w+")
+            else:
+                vmt2 = open(gamefolder + r"\ui\\" + vmtname, "w+")
             vmt2.write('"UnlitGeneric"\n')
             vmt2.write('{\n')
             vmt2.write('    "$translucent" 1\n')
-            vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
+            if gamefolder.find("\\left4dead"):
+                vmt2.write('    "$basetexture"	"vgui\logos\custom\\' + vtfname + '"\n')
+            else:
+                vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
             vmt2.write('    "$vertexcolor" 1\n')
             vmt2.write('    "$vertexalpha" 1\n')
             vmt2.write('    "$no_fullbright" 1\n')
