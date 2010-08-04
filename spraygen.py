@@ -22,8 +22,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-sys.stdout = open("spraygen.log", "w")
-sys.stderr = open("spraygenerr.log", "w")
+#sys.stdout = open("spraygen.log", "w")
+#sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -79,7 +79,7 @@ class mainwindow:
         global steamfolder, builder
         vtfframes=0
         # stop program when window closes
-        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected }
+        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged }
         builder.connect_signals(dic)
         filefilter = gtk.FileFilter() # file pattern filter for dialog
         filefilter.add_pattern("*.gif")
@@ -136,9 +136,28 @@ class mainwindow:
         builder.get_object("height"+str(vtfheight)).set_active(1)   # push the radio buttons that correspond to the size
         builder.get_object("width"+str(vtfwidth)).set_active(1)
 
+    def typechanged(self, object):
+        animate=builder.get_object("animated").get_active()
+        fade=builder.get_object("fading").get_active()
+        if animate:
+            builder.get_object("vbox7").hide_all()
+            builder.get_object("spinbutton1").hide()
+            filename = builder.get_object("filechooserbutton1").get_filename()
+            if filename:
+                pictureupdate = gtk.gdk.PixbufAnimation(filename) # load animation into picture control
+                builder.get_object("image1").set_from_animation(pictureupdate)
+        elif fade:
+            builder.get_object("vbox7").show_all()
+            builder.get_object("spinbutton1").show()
+            filename = builder.get_object("filechooserbutton1").get_filename()
+            if filename:
+                pictureupdate = gtk.gdk.PixbufAnimation(filename)
+                builder.get_object("image1").set_from_animation(pictureupdate)
+
+
     def sizechanged(self, object):  # buttons pressed, set values
-        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder
-        if filename==None:
+        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder, filename
+        if builder.get_object("filechooserbutton1").get_filename()==None:
             return
         if object.name.find("width")==0:
             vtfwidth=int(object.get_label())
@@ -170,9 +189,12 @@ class mainwindow:
     def convert(self, object):
         global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filename, builder
         cleanup() # clean up the junk
+        animate=builder.get_object("animated").get_active()
+        fade=builder.get_object("fading").get_active()
+        print fade, animate
         gamefolderlist=[]
         username=""
-        if filename==None:
+        if builder.get_object("filechooserbutton1").get_filename()==None:
             return
        
         ## check if steam is running
@@ -227,14 +249,17 @@ class mainwindow:
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
-        for tganame in tgalist:
-            if tganame.find("-" + str(int(round(framecount)))) > -1: # process only the frames you need, speeding things up
-                os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame + " TGA\\" + tganame)
-                os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " TGA\\" + tganame + " TGA\\" + tganame)
-                # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame #debug output
-                os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
-                framecount = framecount + everynthframe #advance to next frame
-                framecounter = framecounter + 1
+        if fade:
+            print tgalist[0]
+        if animate:
+            for tganame in tgalist:
+                if tganame.find("-" + str(int(round(framecount)))) > -1: # process only the frames you need, speeding things up
+                    os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame + " TGA\\" + tganame)
+                    os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " TGA\\" + tganame + " TGA\\" + tganame)
+                    # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame #debug output
+                    os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
+                    framecount = framecount + everynthframe #advance to next frame
+                    framecounter = framecounter + 1
                 
         vtfname=os.path.basename(filename) # name of vtf without the path
         vmtname=vtfname.rsplit(".gif")[0] + ".vmt"

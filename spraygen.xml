@@ -5,9 +5,9 @@
   <object class="GtkWindow" id="window1">
     <property name="visible">True</property>
     <property name="has_focus">True</property>
-    <property name="title" translatable="yes">Spraygen 1.2.4</property>
+    <property name="title" translatable="yes">Spraygen 1.3</property>
     <property name="window_position">center</property>
-    <property name="default_width">600</property>
+    <property name="default_width">800</property>
     <property name="default_height">250</property>
     <signal name="destroy" handler="on_window1_destroy"/>
     <child>
@@ -228,6 +228,34 @@
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
             <child>
+              <object class="GtkRadioButton" id="animated">
+                <property name="label" translatable="yes">Animated</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">fading</property>
+                <signal name="toggled" handler="on_animated_toggled"/>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="fading">
+                <property name="label" translatable="yes">Fading</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+                <signal name="group_changed" handler="on_animated_toggled"/>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkLabel" id="label3">
                 <property name="visible">True</property>
                 <property name="has_tooltip">True</property>
@@ -237,7 +265,7 @@ Size:
 Frames:</property>
               </object>
               <packing>
-                <property name="position">0</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -249,7 +277,7 @@ based on your current width/height/transparency</property>
                 <property name="label" translatable="yes">Frames in VTF:</property>
               </object>
               <packing>
-                <property name="position">1</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child>
@@ -266,7 +294,7 @@ or halves the number of frames you can fit in to an 118kb vtf</property>
                 <signal name="toggled" handler="on_transparencybutton_toggled"/>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">4</property>
               </packing>
             </child>
           </object>
@@ -275,17 +303,6 @@ or halves the number of frames you can fit in to an 118kb vtf</property>
             <property name="right_attach">3</property>
             <property name="top_attach">1</property>
             <property name="bottom_attach">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkImage" id="image1">
-            <property name="visible">True</property>
-            <property name="stock">gtk-missing-image</property>
-            <property name="icon-size">3</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
           </packing>
         </child>
         <child>
@@ -451,9 +468,83 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
           </object>
         </child>
         <child>
+          <object class="GtkHBox" id="hbox2">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkVBox" id="vbox8">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkImage" id="image1">
+                    <property name="visible">True</property>
+                    <property name="stock">gtk-missing-image</property>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="spinbutton1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="adjustment">adjustment1</property>
+                    <property name="climb_rate">1</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkVBox" id="vbox7">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkImage" id="image2">
+                    <property name="visible">True</property>
+                    <property name="stock">gtk-missing-image</property>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="spinbutton2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="climb_rate">1</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="right_attach">2</property>
+          </packing>
+        </child>
+        <child>
           <placeholder/>
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkAdjustment" id="adjustment1">
+    <property name="upper">1</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
   </object>
 </interface>
