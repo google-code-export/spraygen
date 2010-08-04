@@ -358,7 +358,8 @@ or halves the number of frames you can fit in to an 118kb vtf</property>
               <object class="GtkLabel" id="label2">
                 <property name="visible">True</property>
                 <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Auto-install copies the files to your vgui folders automatically.</property>
+                <property name="tooltip_text" translatable="yes">Auto-install copies the files to your vgui folders automatically.
+Also edits your cfg\autoexec.cfg to set the spray automatically</property>
                 <property name="label" translatable="yes">Auto-Install</property>
               </object>
               <packing>
