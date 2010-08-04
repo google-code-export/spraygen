@@ -22,8 +22,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-#sys.stdout = open("spraygen.log", "w")
-#sys.stderr = open("spraygenerr.log", "w")
+sys.stdout = open("spraygen.log", "w")
+sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -338,7 +338,7 @@ class mainwindow:
                     os.unlink(gamefolder + vtfname) # delete the destination file of the same name, in the game folder
     
             if os.path.exists(gamefolder + r"\ui")!=True: 
-                if gamefolder.find("\\left4dead"):
+                if gamefolder.find("\\left4dead")>-1:
                     if os.path.exists(gamefolder + r"\..\ui")!=True:
                         os.makedirs(gamefolder + r"\..\ui") # create vgui folder if it doesn't exist
                 else:
@@ -351,27 +351,24 @@ class mainwindow:
             vmt1 = open(gamefolder + vmtname, "w+")
             vmt1.write('LightmappedGeneric\n')
             vmt1.write('{\n')
-            if gamefolder.find("\\left4dead"):
-                vmt1.write('$basetexture "vgui\logos\custom/' + vtfname.rsplit(".vtf")[0] + '"\n')
-            else:
-                vmt1.write('$basetexture "vgui\logos\\' + vtfname + '"\n')
+            vmt1.write('$basetexture "vgui\logos\custom/' + vtfname.rsplit(".vtf")[0] + '"\n')
             vmt1.write('$translucent 1\n')
             vmt1.write('$decal 1\n')
             vmt1.write('$decalscale "0.250"\n')
             vmt1.write('}\n')
             vmt1.close()
     
-            if gamefolder.find("\\left4dead"):
+            if gamefolder.find("\\left4dead")>-1:
                 vmt2 = open(gamefolder + r"\..\ui\\" + vmtname, "w+")
             else:
                 vmt2 = open(gamefolder + r"\ui\\" + vmtname, "w+")
             vmt2.write('"UnlitGeneric"\n')
             vmt2.write('{\n')
             vmt2.write('    "$translucent" 1\n')
-            if gamefolder.find("\\left4dead"):
+            if gamefolder.find("\\left4dead")>-1:
                 vmt2.write('    "$basetexture"	"vgui\logos\custom/' + vtfname.rsplit(".vtf")[0] + '"\n')
             else:
-                vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
+                vmt2.write('    "$basetexture"	"vgui\logos/' + vtfname.rsplit(".vtf")[0] + '"\n')
             vmt2.write('    "$vertexcolor" 1\n')
             vmt2.write('    "$vertexalpha" 1\n')
             vmt2.write('    "$no_fullbright" 1\n')
