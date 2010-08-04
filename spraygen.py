@@ -175,17 +175,17 @@ class mainwindow:
         if filename==None:
             return
        
-        # check if steam is running
-        out = string.join(os.popen('tasklist').readlines())
-        if out.lower().find("steam.exe")>-1:
-            pass # steam is running
-        else:
-            md = gtk.MessageDialog(builder.get_object("window1"), 
-                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
-                gtk.BUTTONS_CLOSE, "Steam is not running, please start Steam before creating a spray")
-            md.run()
-            md.destroy()
-            return
+        ## check if steam is running
+        #out = string.join(os.popen('tasklist').readlines())
+        #if out.lower().find("steam.exe")>-1:
+        #    pass # steam is running
+        #else:
+        #    md = gtk.MessageDialog(builder.get_object("window1"), 
+        #        gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
+        #        gtk.BUTTONS_CLOSE, "Steam is not running, please start Steam before creating a spray")
+        #    md.run()
+        #    md.destroy()
+        #    return
         
         # create exception here if the size is to big to create any frames.
         if vtfframes == 0: # if it has no frames, exit
@@ -237,8 +237,8 @@ class mainwindow:
                 framecounter = framecounter + 1
                 
         vtfname=os.path.basename(filename) # name of vtf without the path
-        vmtname=vtfname.rstrip(".gif") + ".vmt"
-        vtfname=vtfname.rstrip(".gif") + ".vtf"
+        vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
+        vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
 
         output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
         #print output
@@ -299,12 +299,12 @@ class mainwindow:
                     f.close()
                     match=line1.search(filecontents)
                     if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname + '"')
+                        newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
                         f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
                         f.write(newfilecontents)
                         f.close()
                     else:
-                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\custom\\" + vtfname + '"'
+                        newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
                         f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
                         f.write(newfilecontents)
                         f.close()
@@ -319,12 +319,12 @@ class mainwindow:
                     f.close()
                     match=line1.search(filecontents)
                     if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\custom\\" + vtfname + '"')
+                        newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
                         f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
                         f.write(newfilecontents)
                         f.close()
                     else:
-                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\custom\\" + vtfname + '"'
+                        newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
                         f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
                         f.write(newfilecontents)
                         f.close()
@@ -352,12 +352,12 @@ class mainwindow:
             vmt1.write('LightmappedGeneric\n')
             vmt1.write('{\n')
             if gamefolder.find("\\left4dead"):
-                vmt1.write('    "$basetexture"	"vgui\logos\custom\\' + vtfname + '"\n')
+                vmt1.write('$basetexture "vgui\logos\custom/' + vtfname.rsplit(".vtf")[0] + '"\n')
             else:
-                vmt1.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
-            vmt1.write('    "$translucent" "1"\n')
-            vmt1.write('    "$decal" "1"\n')
-            vmt1.write('    "$decalscale" "0.250"\n')
+                vmt1.write('$basetexture "vgui\logos\\' + vtfname + '"\n')
+            vmt1.write('$translucent 1\n')
+            vmt1.write('$decal 1\n')
+            vmt1.write('$decalscale "0.250"\n')
             vmt1.write('}\n')
             vmt1.close()
     
@@ -369,7 +369,7 @@ class mainwindow:
             vmt2.write('{\n')
             vmt2.write('    "$translucent" 1\n')
             if gamefolder.find("\\left4dead"):
-                vmt2.write('    "$basetexture"	"vgui\logos\custom\\' + vtfname + '"\n')
+                vmt2.write('    "$basetexture"	"vgui\logos\custom/' + vtfname.rsplit(".vtf")[0] + '"\n')
             else:
                 vmt2.write('    "$basetexture"	"vgui\logos\\' + vtfname + '"\n')
             vmt2.write('    "$vertexcolor" 1\n')
