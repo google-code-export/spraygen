@@ -226,7 +226,7 @@ class mainwindow:
             builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
 
     def convert(self, object):
-        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filename, builder
+        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filename, builder, workingdir
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         gamefolderlist=[]
@@ -301,7 +301,7 @@ class mainwindow:
                 os.popen("imagemagick\convert -resize " + str(vtfwidth/(2**i)) + "x" + str(vtfheight/(2**i)) + " vtfcmd\\output_01.tga" + " vtfcmd\\output_0" + str(i) + ".tga")
             os.popen("vtfcmd\\nvdxt -file vtfcmd\\*.tga -dxt5 -outdir vtfcmd") # compile to dxt5 format .dds files
             os.popen("vtfcmd\\stitch vtfcmd\output") # stitch .dds files as mipmaps into one .dds texture
-            os.popen("vtfcmd\\vpktoolwrap output.dds") # auto-it wrapper for quick and dirty tools, converts .dds to .vtf
+            os.popen('vtfcmd\\vpktoolwrap "' + workingdir + '\\vtfcmd\\output.dds"') # auto-it wrapper for quick and dirty tools, converts .dds to .vtf
             vtfpath="vtfcmd\\output.vtf"
         elif animate:
             for tganame in tgalist:
