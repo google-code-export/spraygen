@@ -3,7 +3,7 @@ import pygtk
 import gtk
 import re
 import os
-#import time
+import time
 import sys
 import string
 from _winreg import ConnectRegistry, OpenKey, HKEY_CURRENT_USER, QueryValueEx
@@ -79,7 +79,7 @@ class mainwindow:
         global steamfolder, builder
         vtfframes=0
         # stop program when window closes
-        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged }
+        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
         builder.connect_signals(dic)
         filefilter = gtk.FileFilter() # file pattern filter for dialog
         filefilter.add_pattern("*.gif")
@@ -135,25 +135,41 @@ class mainwindow:
             vtfheight = 256
         builder.get_object("height"+str(vtfheight)).set_active(1)   # push the radio buttons that correspond to the size
         builder.get_object("width"+str(vtfwidth)).set_active(1)
+        builder.get_object("adjustment1").set_upper(fileframes)
+        builder.get_object("adjustment2").set_upper(fileframes)
+
+    def framechanged(self, object):
+        global builder
+        filename = builder.get_object("filechooserbutton1").get_filename()
+        if filename:
+            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value()))+".tga")
+            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value()))+".tga")
 
     def typechanged(self, object):
+        global builder
+        builder.get_object("adjustment1").set_value(1)
+        builder.get_object("adjustment2").set_value(1)
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         if animate:
             builder.get_object("vbox7").hide_all()
-            builder.get_object("spinbutton1").hide()
+            builder.get_object("hbox3").hide_all()
             filename = builder.get_object("filechooserbutton1").get_filename()
             if filename:
                 pictureupdate = gtk.gdk.PixbufAnimation(filename) # load animation into picture control
                 builder.get_object("image1").set_from_animation(pictureupdate)
         elif fade:
             builder.get_object("vbox7").show_all()
-            builder.get_object("spinbutton1").show()
+            builder.get_object("hbox3").show_all()
             filename = builder.get_object("filechooserbutton1").get_filename()
             if filename:
                 pictureupdate = gtk.gdk.PixbufAnimation(filename)
-                builder.get_object("image1").set_from_animation(pictureupdate)
-
+                picture1=pictureupdate.get_iter()
+                pixbuf1=picture1.get_pixbuf()
+                #picture1.advance(picture1.get_delay_time())
+                #print picture1.get_delay_time()
+                builder.get_object("image1").set_from_pixbuf(pixbuf1)
+                #builder.get_object("image1").set_from_animation(pictureupdate)
 
     def sizechanged(self, object):  # buttons pressed, set values
         global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder, filename
@@ -261,12 +277,12 @@ class mainwindow:
                     framecount = framecount + everynthframe #advance to next frame
                     framecounter = framecounter + 1
                 
-        vtfname=os.path.basename(filename) # name of vtf without the path
-        vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
-        vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
-
-        output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
-        #print output
+            vtfname=os.path.basename(filename) # name of vtf without the path
+            vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
+            vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
+    
+            output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
+            #print output
 
 
         username=builder.get_object("combobox1").get_active_text()
@@ -278,43 +294,43 @@ class mainwindow:
         line1 = re.compile(r'cl_logofile "(.*)"')
         if tf2check:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                #try:
-                #    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'r')
-                #    filecontents=f.read()
-                #    f.close()
-                #    match=line1.search(filecontents)
-                #    if match:
-                #        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
-                #        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'w')
-                #        f.write(newfilecontents)
-                #        f.close()
-                #    else:
-                #        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
-                #        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\autoexec.cfg", 'w')
-                #        f.write(newfilecontents)
-                #        f.close()
-                #except:
-                #    pass
+                try:
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'r')
+                    filecontents=f.read()
+                    f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass
                 gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
         if csscheck:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                #try:
-                #    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'r')
-                #    filecontents=f.read()
-                #    f.close()
-                #    match=line1.search(filecontents)
-                #    if match:
-                #        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
-                #        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'w')
-                #        f.write(newfilecontents)
-                #        f.close()
-                #    else:
-                #        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
-                #        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\autoexec.cfg", 'w')
-                #        f.write(newfilecontents)
-                #        f.close()
-                #except:
-                #    pass              
+                try:
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'r')
+                    filecontents=f.read()
+                    f.close()
+                    match=line1.search(filecontents)
+                    if match:
+                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                    else:
+                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
+                        f.write(newfilecontents)
+                        f.close()
+                except:
+                    pass              
                 gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
         if l4dcheck:
             if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
