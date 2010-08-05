@@ -380,10 +380,10 @@ class mainwindow:
                     f.write(newfilecontents)
                     f.close()
             except:
-                    newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
-                    f.write(newfilecontents)
-                    f.close()
+                newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                f.write(newfilecontents)
+                f.close()
             gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
         if l4d2check:
             try:
@@ -402,10 +402,10 @@ class mainwindow:
                     f.write(newfilecontents)
                     f.close()
             except:
-                    newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
-                    f.write(newfilecontents)
-                    f.close()
+                newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                f.write(newfilecontents)
+                f.close()
             gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
     
         for gamefolder in gamefolderlist:
