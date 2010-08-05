@@ -23,8 +23,8 @@ transparency=1
 filename=""
 builder = gtk.Builder()
 
-#sys.stdout = open("spraygen.log", "w")
-#sys.stderr = open("spraygenerr.log", "w")
+sys.stdout = open("spraygen.log", "w")
+sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here

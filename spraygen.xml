@@ -275,6 +275,7 @@ Frames:</property>
                 <property name="tooltip_text" translatable="yes">Maximum number of frames calculated to fit in an 118kb vtf file,
 based on your current width/height/transparency</property>
                 <property name="label" translatable="yes">Frames in VTF:</property>
+                <property name="use_markup">True</property>
               </object>
               <packing>
                 <property name="position">3</property>
