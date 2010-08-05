@@ -255,12 +255,11 @@ class mainwindow:
         framecounter = 0
         background = ""
         splicestring = ""
-           
+        
         vtextext = open(r"vtex\materialsrc\vgui\logos\output.txt", "w+")
         vtextext.write('"Startframe" "0"\n')
         vtextext.write('"endframe" "'+str(vtfframes-1)+'"\n')
-        vtextext.close()
-        
+        vtextext.close()        
         everynthframe = 1 # by default, take every frame
         if vtfframes < fileframes: # cut some frames out
             everynthframe = float(fileframes)/float(vtfframes)
