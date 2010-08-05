@@ -3,11 +3,12 @@ import pygtk
 import gtk
 import re
 import os
-import time
+#import time
+import shutil
 import sys
 import string
 from _winreg import ConnectRegistry, OpenKey, HKEY_CURRENT_USER, QueryValueEx
-from math import log, floor
+from math import log
 
 steamfolder=""
 workingdir = os.getcwd()
@@ -27,16 +28,28 @@ builder = gtk.Builder()
 
 def cleanup():
     # cleanup stuff here
-    dirlist = os.listdir("TGA") # clean out old targas
+    dirlist = os.listdir("TGA")
     tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
     for tganame in tgalist:
         os.unlink("TGA\\" + tganame)
+    dirlist = os.listdir("vtfcmd")
+    tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
+    for tganame in tgalist:
+        os.unlink("vtfcmd\\" + tganame)
+    dirlist = os.listdir("vtfcmd")
+    dirlist = [fname for fname in dirlist if fname.endswith(".dds")]
+    for fname in dirlist:
+        os.unlink("vtfcmd\\" + fname)
+    dirlist = os.listdir("vtfcmd")
+    dirlist = [fname for fname in dirlist if fname.endswith(".vtf")]
+    for fname in dirlist:
+        os.unlink("vtfcmd\\" + fname)
     dirlist = os.listdir(r"vtex\materials\vgui\logos") # clean out old .vtfs
     filelist = [fname for fname in dirlist if fname.endswith(".vtf")]
     for fname in filelist:
         os.unlink(r"vtex\materials\vgui\logos\\" + fname)
-    filelist = os.listdir(r"vtex\materialsrc\vgui\logos") # clean out everything in materialsrc
-    for fname in filelist:
+    dirlist = os.listdir(r"vtex\materialsrc\vgui\logos") # clean out everything in materialsrc
+    for fname in dirlist:
         if fname != ".svn":
             os.unlink(r"vtex\materialsrc\vgui\logos\\"+fname)
 
@@ -79,6 +92,8 @@ class mainwindow:
         global steamfolder, builder
         vtfframes=0
         # stop program when window closes
+        builder.get_object("adjustment1").set_value(1)
+        builder.get_object("adjustment2").set_value(1)
         dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
         builder.connect_signals(dic)
         filefilter = gtk.FileFilter() # file pattern filter for dialog
@@ -113,6 +128,7 @@ class mainwindow:
             combobox1.append_text(steamname)
         combobox1.set_active(0)
 
+            
     def fileselected(self, object):
         global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filename, builder
         transparency = 1   # default to no transparency, transparency on = 2
@@ -120,8 +136,16 @@ class mainwindow:
         filename = builder.get_object("filechooserbutton1").get_filename()                           # pull filename from dialog
         if filename==None:
             return
+        cleanup() # clean up the junk
+        os.popen('imagemagick\convert +adjoin -coalesce "' + filename + '" TGA\output.tga') # output .tgas
+        animate=builder.get_object("animated").get_active()
+        fade=builder.get_object("fading").get_active()
         pictureupdate = gtk.gdk.PixbufAnimation(filename)                       # load animation into picture control
-        builder.get_object("image1").set_from_animation(pictureupdate)
+        if fade:
+            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+        elif animate:
+            builder.get_object("image1").set_from_animation(pictureupdate)
         filewidth = pictureupdate.get_width()                                  # get width and height from picture control
         fileheight = pictureupdate.get_height()
         fileframes = string.join(os.popen('imagemagick\identify "' + filename + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
@@ -137,18 +161,19 @@ class mainwindow:
         builder.get_object("width"+str(vtfwidth)).set_active(1)
         builder.get_object("adjustment1").set_upper(fileframes)
         builder.get_object("adjustment2").set_upper(fileframes)
+        if fade:
+            builder.get_object("adjustment1").set_value(1)
+            builder.get_object("adjustment2").set_value(1)
 
     def framechanged(self, object):
         global builder
         filename = builder.get_object("filechooserbutton1").get_filename()
         if filename:
-            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value()))+".tga")
-            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value()))+".tga")
+            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
     def typechanged(self, object):
         global builder
-        builder.get_object("adjustment1").set_value(1)
-        builder.get_object("adjustment2").set_value(1)
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         if animate:
@@ -163,13 +188,9 @@ class mainwindow:
             builder.get_object("hbox3").show_all()
             filename = builder.get_object("filechooserbutton1").get_filename()
             if filename:
-                pictureupdate = gtk.gdk.PixbufAnimation(filename)
-                picture1=pictureupdate.get_iter()
-                pixbuf1=picture1.get_pixbuf()
-                #picture1.advance(picture1.get_delay_time())
-                #print picture1.get_delay_time()
-                builder.get_object("image1").set_from_pixbuf(pixbuf1)
-                #builder.get_object("image1").set_from_animation(pictureupdate)
+                builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+                builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+
 
     def sizechanged(self, object):  # buttons pressed, set values
         global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder, filename
@@ -201,13 +222,13 @@ class mainwindow:
         if vtfframes > fileframes:
             vtfframes = fileframes    # not possible to have more frames in the animation than there was in the file
         builder.get_object("label4").set_label("Frames in VTF: "+ str(vtfframes))
+        if vtfframes==0:
+            builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
 
     def convert(self, object):
         global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filename, builder
-        cleanup() # clean up the junk
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
-        print fade, animate
         gamefolderlist=[]
         username=""
         if builder.get_object("filechooserbutton1").get_filename()==None:
@@ -261,29 +282,42 @@ class mainwindow:
             splicetop = 1
         if spliceleft or splicetop:
             splicestring = "-splice " + str(spliceleft) + "x" + str(splicetop)+ " "
-        os.popen('imagemagick\convert +adjoin -coalesce "' + filename + '" TGA\output.tga') # output .tgas
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
+        vtfname=os.path.basename(filename) # name of vtf without the path
+        vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
+        vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
         if fade:
-            print tgalist[0]
-        if animate:
+            tganame1="output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga"
+            tganame2="output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
+            # generate mipmaps
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame1 + " vtfcmd\\" + tganame1)
+            os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\" + tganame1 + " vtfcmd\\output_00.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame2 + " vtfcmd\\" + tganame2)
+            os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\" + tganame2 + " vtfcmd\\output_01.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth/2) + "x" + str(vtfheight/2) + " vtfcmd\\output_01.tga" + " vtfcmd\\output_01.tga")
+            for i in range(2,7):
+                os.popen("imagemagick\convert -resize " + str(vtfwidth/(2**i)) + "x" + str(vtfheight/(2**i)) + " vtfcmd\\output_01.tga" + " vtfcmd\\output_0" + str(i) + ".tga")
+            os.popen("vtfcmd\\nvdxt -file vtfcmd\\*.tga -dxt5 -outdir vtfcmd") # compile to dxt5 format .dds files
+            os.popen("vtfcmd\\stitch vtfcmd\output") # stitch .dds files as mipmaps into one .dds texture
+            os.popen("vtfcmd\\vpktoolwrap output.dds") # auto-it wrapper for quick and dirty tools, converts .dds to .vtf
+            vtfpath="vtfcmd\\output.vtf"
+        elif animate:
             for tganame in tgalist:
                 if tganame.find("-" + str(int(round(framecount)))) > -1: # process only the frames you need, speeding things up
                     os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame + " TGA\\" + tganame)
                     os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " TGA\\" + tganame + " TGA\\" + tganame)
                     # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame #debug output
-                    os.rename("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
+                    shutil.copy("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
                     framecount = framecount + everynthframe #advance to next frame
                     framecounter = framecounter + 1
-                
-            vtfname=os.path.basename(filename) # name of vtf without the path
-            vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
-            vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
-    
             output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
             #print output
+            vtfpath="vtex\\materials\\vgui\\logos\\output.vtf"
 
+        if os.path.exists(vtfpath)!=True: # if the vtf file doesn't exist, skip the rest.
+            return
 
         username=builder.get_object("combobox1").get_active_text()
         tf2check=builder.get_object("tf2check").get_active()
@@ -293,96 +327,91 @@ class mainwindow:
         savecheck=builder.get_object("savecheck").get_active()
         line1 = re.compile(r'cl_logofile "(.*)"')
         if tf2check:
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                try:
-                    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'r')
-                    filecontents=f.read()
+            try:
+                f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'r')
+                filecontents=f.read()
+                f.close()
+                match=line1.search(filecontents)
+                if match:
+                    newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
+                    f.write(newfilecontents)
                     f.close()
-                    match=line1.search(filecontents)
-                    if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
-                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                    else:
-                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                except:
-                    pass
-                gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
+                else:
+                    newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\cfg\\game.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            except:
+                pass
+            gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\team fortress 2\\tf\\materials\\vgui\\logos\\")
         if csscheck:
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                try:
-                    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'r')
-                    filecontents=f.read()
+            try:
+                f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'r')
+                filecontents=f.read()
+                f.close()
+                match=line1.search(filecontents)
+                if match:
+                    newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
+                    f.write(newfilecontents)
                     f.close()
-                    match=line1.search(filecontents)
-                    if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials\\vgui\\logos\\" + vtfname + '"')
-                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                    else:
-                        newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                except:
-                    pass              
-                gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
+                else:
+                    newfilecontents='cl_logofile "' + "materials\\vgui\\logos\\" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\cfg\\game.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            except:
+                pass              
+            gamefolderlist.append(steamfolder + "\\steamapps\\" + username + "\\counter-strike source\\cstrike\\materials\\vgui\\logos\\")
         if l4dcheck:
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                try:
-                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'r')
-                    filecontents=f.read()
+            try:
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'r')
+                filecontents=f.read()
+                f.close()
+                match=line1.search(filecontents)
+                if match:
+                    newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
                     f.close()
-                    match=line1.search(filecontents)
-                    if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                    else:
-                        newfilecontents=filecontents + "\n" + 'cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                except:
-                        newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
+                else:
+                    newfilecontents=filecontents + "\n" + 'cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            except:
+                    newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead\\left4dead\\materials\\vgui\\logos\\custom\\")
         if l4d2check:
-            if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                try:
-                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'r')
-                    filecontents=f.read()
+            try:
+                f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'r')
+                filecontents=f.read()
+                f.close()
+                match=line1.search(filecontents)
+                if match:
+                    newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
                     f.close()
-                    match=line1.search(filecontents)
-                    if match:
-                        newfilecontents=filecontents.replace(match.group(1),"materials/vgui/logos/custom/" + vtfname + '"')
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                    else:
-                        newfilecontents=filecontents + "\n" + 'cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                except:
-                        newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
-                        f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
-                        f.write(newfilecontents)
-                        f.close()
-                gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
-        
+                else:
+                    newfilecontents=filecontents + "\n" + 'cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            except:
+                    newfilecontents='cl_logofile "' + "materials/vgui/logos/custom/" + vtfname + '"'
+                    f = open(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\cfg\\autoexec.cfg", 'w')
+                    f.write(newfilecontents)
+                    f.close()
+            gamefolderlist.append(steamfolder + "\\steamapps\\common\\left 4 dead 2\\left4dead2\\materials\\vgui\\logos\\custom\\")
+    
         for gamefolder in gamefolderlist:
             if os.path.exists(gamefolder + vtfname): # if the file of the same name exists, in the game folder
-                if os.path.exists("vtex\\materials\\vgui\\logos\\output.vtf"): # if file is actually output by vtex
-                    os.unlink(gamefolder + vtfname) # delete the destination file of the same name, in the game folder
+                os.unlink(gamefolder + vtfname) # delete the destination file of the same name, in the game folder
     
             if os.path.exists(gamefolder + r"\ui")!=True: 
                 if gamefolder.find("\\left4dead")>-1:
@@ -391,8 +420,8 @@ class mainwindow:
                 else:
                     os.makedirs(gamefolder + r"\ui") # create vgui folder if it doesn't exist
     
-            output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "'+ gamefolder + vtfname + '"')
-            #output=os.rename(r'vtex\materials\vgui\logos\output.vtf', gamefolder + vtfname) # copy the file into the game folder
+            #output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "'+ gamefolder + vtfname + '"')
+            shutil.copy(vtfpath,gamefolder + vtfname)
             
             #time.sleep(1)
             vmt1 = open(gamefolder + vmtname, "w+")
@@ -430,7 +459,7 @@ class mainwindow:
             chooser.set_current_name(vtfname)
             response = chooser.run()
             if response == gtk.RESPONSE_OK:
-                output=os.popen(r'copy /y vtex\materials\vgui\logos\output.vtf "' + chooser.get_filename() + '"')
+                shutil.copy(vtfpath, chooser.get_filename())
             elif response == gtk.RESPONSE_CANCEL:
                 pass
             chooser.destroy()
