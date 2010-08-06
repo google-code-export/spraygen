@@ -22,9 +22,14 @@ fileframes=0
 transparency=1
 filename=""
 builder = gtk.Builder()
-
-sys.stdout = open("spraygen.log", "w")
-sys.stderr = open("spraygenerr.log", "w")
+filefilter = gtk.FileFilter() # file pattern filter for dialog
+filefilter.add_pattern("*.gif")
+filefilter.add_pattern("*.png")
+filefilter.add_pattern("*.tga")
+filefilter.add_pattern("*.jpg")
+# debug logs
+#sys.stdout = open("spraygen.log", "w")
+#sys.stderr = open("spraygenerr.log", "w")
 
 def cleanup():
     # cleanup stuff here
@@ -89,16 +94,13 @@ class mainwindow:
     global builder
     builder.add_from_file("spraygen.xml")
     def __init__(self):
-        global steamfolder, builder
+        global steamfolder, builder, filefilter
         vtfframes=0
         # stop program when window closes
         builder.get_object("adjustment1").set_value(1)
         builder.get_object("adjustment2").set_value(1)
         dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
         builder.connect_signals(dic)
-        filefilter = gtk.FileFilter() # file pattern filter for dialog
-        filefilter.add_pattern("*.gif")
-        filefilter.add_pattern("*.png")
         builder.get_object("filechooserbutton1").set_filter(filefilter)
         #figure out game folder
         try:
@@ -164,6 +166,7 @@ class mainwindow:
         if fade:
             builder.get_object("adjustment1").set_value(1)
             builder.get_object("adjustment2").set_value(1)
+        builder.get_object("filechooserbutton1").set_filter(filefilter)
 
     def framechanged(self, object):
         global builder
@@ -285,8 +288,8 @@ class mainwindow:
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
         vtfname=os.path.basename(filename) # name of vtf without the path
-        vmtname=vtfname.rsplit(".gif")[0] + ".vmt"
-        vtfname=vtfname.rsplit(".gif")[0] + ".vtf"
+        vmtname=vtfname.rsplit(".")[0] + ".vmt"
+        vtfname=vtfname.rsplit(".")[0] + ".vtf"
         if fade:
             tganame1="output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga"
             tganame2="output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
