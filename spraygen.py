@@ -20,7 +20,7 @@ fileheight=0
 vtfframes=0
 fileframes=0
 transparency=1
-filename=""
+filenames=[""]
 builder = gtk.Builder()
 filefilter = gtk.FileFilter() # file pattern filter for dialog
 filefilter.add_pattern("*.gif")
@@ -94,14 +94,13 @@ class mainwindow:
     global builder
     builder.add_from_file("spraygen.xml")
     def __init__(self):
-        global steamfolder, builder, filefilter
+        global steamfolder, builder
         vtfframes=0
         # stop program when window closes
         builder.get_object("adjustment1").set_value(1)
         builder.get_object("adjustment2").set_value(1)
-        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_filechooserbutton1_file_set" : self.fileselected, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
+        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_importbutton_clicked" : self.importdialog, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
         builder.connect_signals(dic)
-        builder.get_object("filechooserbutton1").set_filter(filefilter)
         #figure out game folder
         try:
             registryobj = ConnectRegistry(None,HKEY_CURRENT_USER)
@@ -130,19 +129,30 @@ class mainwindow:
             combobox1.append_text(steamname)
         combobox1.set_active(0)
 
+    def importdialog(self, object):
+        global filefilter, filenames
+        fileopendialog = gtk.FileChooserDialog("Import", builder.get_object("window1"), gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        fileopendialog.set_filter(filefilter)
+        fileopendialog.set_select_multiple(True)
+        response = fileopendialog.run()
+        if response == gtk.RESPONSE_OK:
+            filenames = fileopendialog.get_filenames()
+        elif response == gtk.RESPONSE_CANCEL:
+            pass
+        fileopendialog.destroy()
+        self.fileselected(self)
             
     def fileselected(self, object):
-        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filename, builder
+        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filenames, builder
         transparency = 1   # default to no transparency, transparency on = 2
         builder.get_object("transparencybutton").set_active(0)
-        filename = builder.get_object("filechooserbutton1").get_filename()                           # pull filename from dialog
-        if filename==None:
+        if filenames[0]=="":
             return
         cleanup() # clean up the junk
-        os.popen('imagemagick\convert +adjoin -coalesce "' + filename + '" TGA\output.tga') # output .tgas
+        os.popen('imagemagick\convert +adjoin -coalesce "' + filenames[0] + '" TGA\output.tga') # output .tgas
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
-        pictureupdate = gtk.gdk.PixbufAnimation(filename)                       # load animation into picture control
+        pictureupdate = gtk.gdk.PixbufAnimation(filenames[0])                       # load animation into picture control
         if fade:
             builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
             builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
@@ -150,7 +160,7 @@ class mainwindow:
             builder.get_object("image1").set_from_animation(pictureupdate)
         filewidth = pictureupdate.get_width()                                  # get width and height from picture control
         fileheight = pictureupdate.get_height()
-        fileframes = string.join(os.popen('imagemagick\identify "' + filename + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
+        fileframes = string.join(os.popen('imagemagick\identify "' + filenames[0] + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
         builder.get_object("label3").set_label("Image info\nSize:"+str(filewidth)+"x"+str(fileheight)+"\nFrames:"+str(fileframes))
         # find nearest power of 2 for width and height
         vtfwidth = int(pow(2,round(log(filewidth,2))))
@@ -166,38 +176,34 @@ class mainwindow:
         if fade:
             builder.get_object("adjustment1").set_value(1)
             builder.get_object("adjustment2").set_value(1)
-        builder.get_object("filechooserbutton1").set_filter(filefilter)
 
     def framechanged(self, object):
-        global builder
-        filename = builder.get_object("filechooserbutton1").get_filename()
-        if filename:
+        global builder, filenames
+        if filenames[0]:
             builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
             builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
     def typechanged(self, object):
-        global builder
+        global builder, filenames
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         if animate:
             builder.get_object("vbox7").hide_all()
             builder.get_object("hbox3").hide_all()
-            filename = builder.get_object("filechooserbutton1").get_filename()
-            if filename:
-                pictureupdate = gtk.gdk.PixbufAnimation(filename) # load animation into picture control
+            if filenames[0]:
+                pictureupdate = gtk.gdk.PixbufAnimation(filenames[0]) # load animation into picture control
                 builder.get_object("image1").set_from_animation(pictureupdate)
         elif fade:
             builder.get_object("vbox7").show_all()
             builder.get_object("hbox3").show_all()
-            filename = builder.get_object("filechooserbutton1").get_filename()
-            if filename:
+            if filenames[0]:
                 builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
                 builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
 
     def sizechanged(self, object):  # buttons pressed, set values
-        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder, filename
-        if builder.get_object("filechooserbutton1").get_filename()==None:
+        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, builder, filenames
+        if filenames[0]=="":
             return
         if object.name.find("width")==0:
             vtfwidth=int(object.get_label())
@@ -229,12 +235,12 @@ class mainwindow:
             builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
 
     def convert(self, object):
-        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filename, builder, workingdir
+        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filenames, builder, workingdir
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         gamefolderlist=[]
         username=""
-        if builder.get_object("filechooserbutton1").get_filename()==None:
+        if filenames[0]=="":
             return
        
         ## check if steam is running
@@ -287,7 +293,7 @@ class mainwindow:
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
-        vtfname=os.path.basename(filename) # name of vtf without the path
+        vtfname=os.path.basename(filenames[0]) # name of vtf without the path
         vmtname=vtfname.rsplit(".")[0] + ".vmt"
         vtfname=vtfname.rsplit(".")[0] + ".vtf"
         if fade:
@@ -459,6 +465,9 @@ class mainwindow:
         if savecheck:
             chooser = gtk.FileChooserDialog("Save As",None,gtk.FILE_CHOOSER_ACTION_SAVE,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_SAVE,gtk.RESPONSE_OK))
             chooser.set_current_name(vtfname)
+            filefilter1 = gtk.FileFilter() # file pattern filter for dialog
+            filefilter1.add_pattern("*.vtf")
+            chooser.set_filter(filefilter1)
             response = chooser.run()
             if response == gtk.RESPONSE_OK:
                 shutil.copy(vtfpath, chooser.get_filename())
