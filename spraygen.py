@@ -157,7 +157,8 @@ class mainwindow:
         self.fileselected2(self)
 
     def fileselected(self, object):
-        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filenames, builder
+        global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filenames, builder, tgabasename, filename2
+        filename2=""
         transparency = 1   # default to no transparency, transparency on = 2
         builder.get_object("transparencybutton").set_active(0)
         cleanup() # clean up the junk
@@ -165,9 +166,13 @@ class mainwindow:
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         pictureupdate = gtk.gdk.PixbufAnimation(filenames[0])                       # load animation into picture control
+        if filenames[0].find(".gif")>-1:
+            tgabasename="tga\\output-"
+        else:
+            tgabasename="tga\\output"
         if fade:
-            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
-            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+            builder.get_object("image1").set_from_file(tgabasename+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+            builder.get_object("image2").set_from_file(tgabasename+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
         elif animate:
             builder.get_object("image1").set_from_animation(pictureupdate)
         filewidth = pictureupdate.get_width()                                  # get width and height from picture control
@@ -190,29 +195,33 @@ class mainwindow:
             builder.get_object("adjustment2").set_value(1)
 
     def fileselected2(self, object):
-        global fileheight2, filewidth2, fileframes, filename2, builder
+        global fileheight2, filewidth2, fileframes, filename2, builder, tgabasename2
         transparency = 1   # default to no transparency, transparency on = 2
         #cleanup() # clean up the junk
         pictureupdate = gtk.gdk.PixbufAnimation(filename2) 
         os.popen('imagemagick\convert +adjoin -coalesce "' + filename2 + '" TGA\output2.tga') # output .tgas
         fileframes2 = string.join(os.popen('imagemagick\identify "' + filename2 + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
+        if filename2.find(".gif")>-1:
+            tgabasename2="tga\\output2-"
+        else:
+            tgabasename2="tga\\output2"
         builder.get_object("adjustment2").set_upper(fileframes2)
         builder.get_object("adjustment2").set_value(1)
-        builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+        builder.get_object("image2").set_from_file(tgabasename2+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
         filewidth2 = pictureupdate.get_width()                                  # get width and height from picture control
         fileheight2 = pictureupdate.get_height()
 
     def framechanged(self, object):
-        global builder, filenames, filename2
+        global builder, filenames, filename2, tgabasename, tgabasename2
         if filenames[0]:
-            builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+            builder.get_object("image1").set_from_file(tgabasename+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
             if filename2:
-                builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                builder.get_object("image2").set_from_file(tgabasename2+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
             else:
-                builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                builder.get_object("image2").set_from_file(tgabasename+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
     def typechanged(self, object):
-        global builder, filenames
+        global builder, filenames, tgabasename, tgabasename2
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         if animate:
@@ -227,11 +236,11 @@ class mainwindow:
             builder.get_object("hbox3").show_all()
             builder.get_object("importbutton2").show()
             if filenames[0]:
-                builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
+                builder.get_object("image1").set_from_file(tgabasename+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
                 if filename2:
-                    builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                    builder.get_object("image2").set_from_file(tgabasename2+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
                 else:
-                    builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                    builder.get_object("image2").set_from_file(tgabasename+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
 
     def sizechanged(self, object):  # buttons pressed, set values
@@ -268,7 +277,7 @@ class mainwindow:
             builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
 
     def convert(self, object):
-        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, fileheight2, filewidth2, vtfframes, fileframes, transparency, filenames, builder, workingdir, filename2
+        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, fileheight2, filewidth2, vtfframes, fileframes, transparency, filenames, builder, workingdir, filename2, tgabasename, tgabasename2
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         gamefolderlist=[]
@@ -351,15 +360,15 @@ class mainwindow:
         if fade:
             if vtfframes == 1: # no space for 2 frames? exit.
                 return
-            tganame1="output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga"
+            tganame1=tgabasename+str(int(builder.get_object("adjustment1").get_value())-1)+".tga"
             if filename2:
-                tganame2="output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
+                tganame2=tgabasename2+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
             else:
-                tganame2="output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
+                tganame2=tgabasename+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
             # generate mipmaps
-            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame1 + " vtfcmd\\output_00.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " " + tganame1 + " vtfcmd\\output_00.tga")
             os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\output_00.tga vtfcmd\\output_00.tga")
-            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame2 + " vtfcmd\\output_01.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " " + tganame2 + " vtfcmd\\output_01.tga")
             os.popen("imagemagick\convert " + splicestring2 + background + "-border " + str(int(leftrightborder2/2)) + "x" + str(int(topbottomborder2/2)) + " vtfcmd\\output_01.tga vtfcmd\\output_01.tga")
             os.popen("imagemagick\convert -resize " + str(vtfwidth/2) + "x" + str(vtfheight/2) + " vtfcmd\\output_01.tga vtfcmd\\output_01.tga")
             for i in range(2,7):
