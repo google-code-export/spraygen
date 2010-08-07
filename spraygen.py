@@ -21,6 +21,7 @@ vtfframes=0
 fileframes=0
 transparency=1
 filenames=[""]
+filename2=""
 builder = gtk.Builder()
 filefilter = gtk.FileFilter() # file pattern filter for dialog
 filefilter.add_pattern("*.gif")
@@ -99,7 +100,7 @@ class mainwindow:
         # stop program when window closes
         builder.get_object("adjustment1").set_value(1)
         builder.get_object("adjustment2").set_value(1)
-        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_importbutton_clicked" : self.importdialog, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged}
+        dic = { "on_button1_clicked" : self.convert, "on_window1_destroy" : gtk.main_quit, "on_radiobutton1_toggled" : self.sizechanged, "on_radiobutton2_toggled" : self.sizechanged, "on_radiobutton3_toggled" : self.sizechanged, "on_radiobutton4_toggled" : self.sizechanged, "on_radiobutton5_toggled" : self.sizechanged, "on_radiobutton6_toggled" : self.sizechanged, "on_radiobutton7_toggled" : self.sizechanged, "on_radiobutton8_toggled" : self.sizechanged, "on_radiobutton9_toggled" : self.sizechanged, "on_radiobutton10_toggled" : self.sizechanged, "on_transparencybutton_toggled" : self.sizechanged, "on_importbutton_clicked" : self.importdialog, "on_animated_toggled" : self.typechanged, "on_fading_toggled" : self.typechanged, "on_spinbutton2_value_changed" : self.framechanged, "on_spinbutton1_value_changed" : self.framechanged, "on_importbutton2_clicked" : self.importdialog2}
         builder.connect_signals(dic)
         #figure out game folder
         try:
@@ -142,12 +143,23 @@ class mainwindow:
         fileopendialog.destroy()
         self.fileselected(self)
             
+    def importdialog2(self, object):
+        global filefilter, filename2
+        fileopendialog = gtk.FileChooserDialog("Import 2nd frame", builder.get_object("window1"), gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        fileopendialog.set_filter(filefilter)
+        fileopendialog.set_select_multiple(False)
+        response = fileopendialog.run()
+        if response == gtk.RESPONSE_OK:
+            filename2 = fileopendialog.get_filename()
+        elif response == gtk.RESPONSE_CANCEL:
+            pass
+        fileopendialog.destroy()
+        self.fileselected2(self)
+
     def fileselected(self, object):
         global vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, filenames, builder
         transparency = 1   # default to no transparency, transparency on = 2
         builder.get_object("transparencybutton").set_active(0)
-        if filenames[0]=="":
-            return
         cleanup() # clean up the junk
         os.popen('imagemagick\convert +adjoin -coalesce "' + filenames[0] + '" TGA\output.tga') # output .tgas
         animate=builder.get_object("animated").get_active()
@@ -177,11 +189,27 @@ class mainwindow:
             builder.get_object("adjustment1").set_value(1)
             builder.get_object("adjustment2").set_value(1)
 
+    def fileselected2(self, object):
+        global fileheight2, filewidth2, fileframes, filename2, builder
+        transparency = 1   # default to no transparency, transparency on = 2
+        #cleanup() # clean up the junk
+        pictureupdate = gtk.gdk.PixbufAnimation(filename2) 
+        os.popen('imagemagick\convert +adjoin -coalesce "' + filename2 + '" TGA\output2.tga') # output .tgas
+        fileframes2 = string.join(os.popen('imagemagick\identify "' + filename2 + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
+        builder.get_object("adjustment2").set_upper(fileframes2)
+        builder.get_object("adjustment2").set_value(1)
+        builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+        filewidth2 = pictureupdate.get_width()                                  # get width and height from picture control
+        fileheight2 = pictureupdate.get_height()
+
     def framechanged(self, object):
-        global builder, filenames
+        global builder, filenames, filename2
         if filenames[0]:
             builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
-            builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+            if filename2:
+                builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+            else:
+                builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
     def typechanged(self, object):
         global builder, filenames
@@ -190,15 +218,20 @@ class mainwindow:
         if animate:
             builder.get_object("vbox7").hide_all()
             builder.get_object("hbox3").hide_all()
+            builder.get_object("importbutton2").hide()
             if filenames[0]:
                 pictureupdate = gtk.gdk.PixbufAnimation(filenames[0]) # load animation into picture control
                 builder.get_object("image1").set_from_animation(pictureupdate)
         elif fade:
             builder.get_object("vbox7").show_all()
             builder.get_object("hbox3").show_all()
+            builder.get_object("importbutton2").show()
             if filenames[0]:
                 builder.get_object("image1").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga")
-                builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                if filename2:
+                    builder.get_object("image2").set_from_file("tga\\output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
+                else:
+                    builder.get_object("image2").set_from_file("tga\\output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga")
 
 
     def sizechanged(self, object):  # buttons pressed, set values
@@ -235,7 +268,7 @@ class mainwindow:
             builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
 
     def convert(self, object):
-        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, vtfframes, fileframes, transparency, filenames, builder, workingdir
+        global steamfolder, vtfwidth, vtfheight, fileheight, filewidth, fileheight2, filewidth2, vtfframes, fileframes, transparency, filenames, builder, workingdir, filename2
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
         gamefolderlist=[]
@@ -264,6 +297,7 @@ class mainwindow:
         framecounter = 0
         background = ""
         splicestring = ""
+        splicestring2 = ""
         
         vtextext = open(r"vtex\materialsrc\vgui\logos\output.txt", "w+")
         vtextext.write('"Startframe" "0"\n')
@@ -290,6 +324,24 @@ class mainwindow:
             splicetop = 1
         if spliceleft or splicetop:
             splicestring = "-splice " + str(spliceleft) + "x" + str(splicetop)+ " "
+        if filename2:
+            tempw = filewidth2/float(vtfwidth)
+            temph = fileheight2/float(vtfheight)
+            if temph > tempw:
+                newheight = vtfheight
+                newwidth = int(round(float(filewidth2) * float(vtfheight) / float(fileheight2)))
+            else:
+                newheight = int(round(float(fileheight2) * float(vtfwidth) / float(filewidth2)))
+                newwidth = vtfwidth
+            topbottomborder2 = int(round(vtfheight - newheight))
+            leftrightborder2 = int(round(vtfwidth - newwidth))
+            if leftrightborder2 % 2:   # if the border padding isn't an even number, splice an extra pixel of border in.
+                spliceleft = 1
+            if topbottomborder2 % 2:
+                splicetop = 1
+            if spliceleft or splicetop:
+                splicestring2 = "-splice " + str(spliceleft) + "x" + str(splicetop)+ " "
+            
         dirlist = os.listdir("TGA")
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
@@ -297,14 +349,19 @@ class mainwindow:
         vmtname=vtfname.rsplit(".")[0] + ".vmt"
         vtfname=vtfname.rsplit(".")[0] + ".vtf"
         if fade:
+            if vtfframes == 1: # no space for 2 frames? exit.
+                return
             tganame1="output-"+str(int(builder.get_object("adjustment1").get_value())-1)+".tga"
-            tganame2="output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
+            if filename2:
+                tganame2="output2-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
+            else:
+                tganame2="output-"+str(int(builder.get_object("adjustment2").get_value())-1)+".tga"
             # generate mipmaps
-            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame1 + " vtfcmd\\" + tganame1)
-            os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\" + tganame1 + " vtfcmd\\output_00.tga")
-            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame2 + " vtfcmd\\" + tganame2)
-            os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\" + tganame2 + " vtfcmd\\output_01.tga")
-            os.popen("imagemagick\convert -resize " + str(vtfwidth/2) + "x" + str(vtfheight/2) + " vtfcmd\\output_01.tga" + " vtfcmd\\output_01.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame1 + " vtfcmd\\output_00.tga")
+            os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtfcmd\\output_00.tga vtfcmd\\output_00.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame2 + " vtfcmd\\output_01.tga")
+            os.popen("imagemagick\convert " + splicestring2 + background + "-border " + str(int(leftrightborder2/2)) + "x" + str(int(topbottomborder2/2)) + " vtfcmd\\output_01.tga vtfcmd\\output_01.tga")
+            os.popen("imagemagick\convert -resize " + str(vtfwidth/2) + "x" + str(vtfheight/2) + " vtfcmd\\output_01.tga vtfcmd\\output_01.tga")
             for i in range(2,7):
                 os.popen("imagemagick\convert -resize " + str(vtfwidth/(2**i)) + "x" + str(vtfheight/(2**i)) + " vtfcmd\\output_01.tga" + " vtfcmd\\output_0" + str(i) + ".tga")
             os.popen("vtfcmd\\nvdxt -file vtfcmd\\*.tga -dxt5 -outdir vtfcmd") # compile to dxt5 format .dds files
