@@ -274,6 +274,9 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
               </packing>
             </child>
           </object>
+          <packing>
+            <property name="y_options"></property>
+          </packing>
         </child>
         <child>
           <object class="GtkHBox" id="hbox2">
@@ -296,9 +299,11 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
                     <child>
                       <object class="GtkLabel" id="label9">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">Near</property>
+                        <property name="label" translatable="yes">Near Frame</property>
                       </object>
                       <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
@@ -313,6 +318,8 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
                         <signal name="value_changed" handler="on_spinbutton1_value_changed"/>
                       </object>
                       <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -344,9 +351,10 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
                     <child>
                       <object class="GtkLabel" id="label8">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">Far</property>
+                        <property name="label" translatable="yes">Far Frame</property>
                       </object>
                       <packing>
+                        <property name="expand">False</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
@@ -361,6 +369,8 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
                         <signal name="value_changed" handler="on_spinbutton2_value_changed"/>
                       </object>
                       <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -581,11 +591,8 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
           </packing>
         </child>
         <child>
-          <placeholder/>
-        </child>
-        <child>
           <object class="GtkButton" id="importbutton2">
-            <property name="label" translatable="yes">Import 2nd frame</property>
+            <property name="label" translatable="yes"> Import 2nd frame </property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <signal name="clicked" handler="on_importbutton2_clicked"/>
@@ -595,7 +602,11 @@ Also edits your cfg\autoexec.cfg to set the spray automatically</property>
             <property name="right_attach">2</property>
             <property name="top_attach">2</property>
             <property name="bottom_attach">3</property>
+            <property name="x_options"></property>
           </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
     </child>
