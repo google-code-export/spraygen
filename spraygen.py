@@ -287,16 +287,22 @@ class mainwindow:
             if vtfheight > 256:
                 vtfheight = 256
             builder.get_object("height"+str(vtfheight)).set_active(1)
+
+        if fade:
+            if vtfwidth > 256:
+                vtfwidth = 256
+                builder.get_object("width"+str(vtfwidth)).set_active(1)
+            if vtfheight > 256:
+                vtfheight = 256
+                builder.get_object("height"+str(vtfheight)).set_active(1)
+
         
         vtfframes = int(round(magicnumber /(vtfwidth*vtfheight*transparency)))
-        if filenames[0].find(".gif")>-1:
+        if animate:
             if vtfframes > fileframes:
                 vtfframes = fileframes    # not possible to have more frames in the animation than there was in the file
-        else:
-            if animate:
-                vtfframes = 1
-            elif fade:
-                vtfframes = 2
+        elif fade:
+            vtfframes = 2
         builder.get_object("label4").set_label("Frames in VTF: "+ str(vtfframes))
         if vtfframes==0:
             builder.get_object("label4").set_label('Frames in VTF: <span foreground="red" size="x-large">' + str(vtfframes) + '</span>')
