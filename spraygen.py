@@ -35,7 +35,7 @@ filefilter.add_pattern("*.jpg")
 def cleanup():
     # cleanup stuff here
     dirlist = os.listdir("TGA")
-    tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
+    tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga") or tganame.endswith(".gif")]
     for tganame in tgalist:
         os.unlink("TGA\\" + tganame)
     dirlist = os.listdir("vtfcmd")
@@ -59,6 +59,50 @@ def cleanup():
         if fname != ".svn":
             os.unlink(r"vtex\materialsrc\vgui\logos\\"+fname)
 
+def createanimation():
+    global filenames, transparency
+    frame=0
+    vtfwidth = 256
+    vtfheight = 256
+    dirlist = os.listdir("TGA")
+    if os.path.exists("tga\\output.gif")!=True:
+        tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga") and tganame.startswith("output-")]
+        for tganame in tgalist:
+            os.unlink("tga\\" + tganame)
+        for file in filenames:
+            os.popen("imagemagick\\convert \"" + file + "\" TGA\\output-" + str(frame) + ".tga") # output .tgas
+            spliceleft = 0
+            splicetop = 0
+            background = ""
+            splicestring = ""
+            temppixbuf = gtk.gdk.pixbuf_new_from_file("tga\\output-" + str(frame) + ".tga")
+            filewidth = temppixbuf.get_width()
+            fileheight = temppixbuf.get_height()
+#            background="-background transparent -bordercolor transparent " # always import tga files as transparent
+#            if transparency==2: background="-background transparent -bordercolor transparent " # pass this string to convert.exe if transparency is enabled
+#            else: background="-alpha deactivate " # no transparency, no alpha channel. room for more frames.
+            tempw = filewidth/float(vtfwidth)
+            temph = fileheight/float(vtfheight)
+            if temph > tempw:
+                newheight = vtfheight
+                newwidth = int(round(float(filewidth) * float(vtfheight) / float(fileheight)))
+            else:
+                newheight = int(round(float(fileheight) * float(vtfwidth) / float(filewidth)))
+                newwidth = vtfwidth
+            topbottomborder = int(round(vtfheight - newheight))
+            leftrightborder = int(round(vtfwidth - newwidth))
+            if leftrightborder % 2:   # if the border padding isn't an even number, splice an extra pixel of border in.
+                spliceleft = 1
+            if topbottomborder % 2:
+                splicetop = 1
+            if spliceleft or splicetop:
+                splicestring = "-splice " + str(spliceleft) + "x" + str(splicetop)+ " "
+            os.popen("imagemagick\\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " tga\\output-"+str(frame)+".tga" + " tga\\output-"+str(frame)+".tga")
+            os.popen("imagemagick\\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " tga\\output-"+str(frame)+".tga tga\\output-"+str(frame)+".tga")
+            frame=frame+1
+        os.popen("imagemagick\\convert -delay 80 -dispose background -loop 0 TGA\\output-*.tga tga\\output.gif") # output .tgas
+    animation = gtk.gdk.PixbufAnimation("tga\\output.gif")
+    return animation
 
 # natural sort functions
 def try_int(s):
@@ -161,19 +205,23 @@ class mainwindow:
         if filenames[0]=="":
             return
         dirlist = os.listdir("TGA")
-        tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga") and tganame.startswith("output-")]
+        tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga") and tganame.startswith("output-") or tganame.endswith(".gif") ]
         for tganame in tgalist:
             os.unlink("tga\\" + tganame)
         filename2=""
-        transparency = 1   # default to no transparency, transparency on = 2
-        builder.get_object("transparencybutton").set_active(0)
-        os.popen('imagemagick\convert +adjoin -coalesce "' + filenames[0] + '" TGA\output.tga') # output .tgas
+        transparency = builder.get_object("transparencybutton").get_active()+1
+        if len(filenames)<2:
+            os.popen('imagemagick\convert +adjoin -coalesce "' + filenames[0] + '" TGA\output.tga') # output .tgas
         animate=builder.get_object("animated").get_active()
         fade=builder.get_object("fading").get_active()
-        pictureupdate = gtk.gdk.PixbufAnimation(filenames[0])                       # load animation into picture control
+        if len(filenames) < 2:
+            pictureupdate = gtk.gdk.PixbufAnimation(filenames[0])                       # load animation into picture control
+        else:
+            pictureupdate = createanimation()
         tgabasename="tga\\output-"
         if filenames[0].find(".gif")==-1:
-            os.rename("tga\\output.tga","tga\\output-0.tga")
+            if len(filenames)<2:
+                os.rename("tga\\output.tga","tga\\output-0.tga")
         if fade:
             builder.get_object("image1").set_from_file(tgabasename+"0"+".tga")
             builder.get_object("image2").set_from_file(tgabasename+"0"+".tga")
@@ -183,6 +231,10 @@ class mainwindow:
         fileheight = pictureupdate.get_height()
         if filenames[0].find(".gif")>-1:
             fileframes = string.join(os.popen('imagemagick\identify "' + filenames[0] + '"').readlines()).count("[")  # count number of frames from imagemagick identify.exe
+        elif len(filenames) > 1:
+            dirlist = os.listdir("TGA")
+            tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga") and tganame.startswith("output-")]
+            fileframes=len(tgalist)
         else:
             fileframes=1
         builder.get_object("label3").set_label("Image info\nSize:"+str(filewidth)+"x"+str(fileheight)+"\nFrames:"+str(fileframes))
@@ -243,7 +295,10 @@ class mainwindow:
             builder.get_object("hbox3").hide_all()
             builder.get_object("importbutton2").hide()
             if filenames[0]:
-                pictureupdate = gtk.gdk.PixbufAnimation(filenames[0]) # load animation into picture control
+                if len(filenames) < 2:
+                    pictureupdate = gtk.gdk.PixbufAnimation(filenames[0])                       # load animation into picture control
+                else:
+                    pictureupdate = createanimation()
                 builder.get_object("image1").set_from_animation(pictureupdate)
         elif fade:
             builder.get_object("vbox7").show_all()
@@ -270,11 +325,7 @@ class mainwindow:
             vtfwidth=int(object.get_label())
         elif object.name.find("height")==0:
             vtfheight=int(object.get_label())
-        elif object.name.find("transparency")==0:
-            if object.get_active() == 1:
-                transparency=2     # transparency on
-            elif object.get_active() ==0:
-                transparency=1     # transparency off
+        transparency = builder.get_object("transparencybutton").get_active()+1
         
         # exception here if they try to make it bigger than the original image dimensions.
         if vtfwidth > int(pow(2,round(log(filewidth,2)))):
@@ -389,7 +440,8 @@ class mainwindow:
             leftrightborder2=leftrightborder
             topbottomborder2=topbottomborder
             splicestring2=splicestring
-        dirlist = os.listdir("TGA")
+        tgadir = "tga\\"
+        dirlist = os.listdir(tgadir)
         tgalist = [tganame for tganame in dirlist if tganame.endswith(".tga")]
         natsort(tgalist) # natural sort the TGA list to get them in the right order
         vtfname=os.path.basename(filenames[0]) # name of vtf without the path
@@ -420,18 +472,16 @@ class mainwindow:
         elif animate:
             for tganame in tgalist:
                 if tganame.find("-" + str(int(round(framecount)))) > -1: # process only the frames you need, speeding things up
-                    os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " TGA\\" + tganame + " TGA\\" + tganame)
-                    os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " TGA\\" + tganame + " TGA\\" + tganame)
-                    # print "convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " " + tganame + " " + tganame #debug output
-                    shutil.copy("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
+                    os.popen("imagemagick\convert -resize " + str(vtfwidth) + "x" + str(vtfheight) + " " + tgadir + tganame + " " + "vtex\\materialsrc\\vgui\\logos\\"  + tganame)
+                    os.popen("imagemagick\convert " + splicestring + background + "-border " + str(int(leftrightborder/2)) + "x" + str(int(topbottomborder/2)) + " vtex\\materialsrc\\vgui\\logos\\" + tganame + " vtex\\materialsrc\\vgui\\logos\\" + tganame)
+                    shutil.copy("vtex\\materialsrc\\vgui\\logos\\" + tganame,"vtex\\materialsrc\\vgui\\logos\\output" + '%0*d' % (3, framecounter)  + ".tga")
                     framecount = framecount + everynthframe #advance to next frame
                     framecounter = framecounter + 1
-            if filenames[0].find(".gif")>-1:
+            if filenames[0].find(".gif")>-1 or len(filenames)>1:
                 output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
             else:
                 output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output000.tga').readlines()) # single frame
-            os.rename("vtex\\materials\\vgui\\logos\output000.vtf", "vtex\\materials\\vgui\\logos\output.vtf")
-            #print output
+                os.rename("vtex\\materials\\vgui\\logos\output000.vtf", "vtex\\materials\\vgui\\logos\output.vtf")
             vtfpath="vtex\\materials\\vgui\\logos\\output.vtf"
 
         if os.path.exists(vtfpath)!=True: # if the vtf file doesn't exist, skip the rest.
