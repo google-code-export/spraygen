@@ -315,7 +315,11 @@ class mainwindow:
         username=""
         if filenames[0]=="":
             return
-       
+        dirlist = os.listdir(r"vtex\materials\vgui\logos") # clean out old .vtfs
+        filelist = [fname for fname in dirlist if fname.endswith(".vtf")]
+        for fname in filelist:
+            os.unlink(r"vtex\materials\vgui\logos\\" + fname)
+
         ## check if steam is running
         #out = string.join(os.popen('tasklist').readlines())
         #if out.lower().find("steam.exe")>-1:
@@ -422,7 +426,11 @@ class mainwindow:
                     shutil.copy("TGA\\" + tganame,r"vtex\materialsrc\vgui\logos\output" + '%0*d' % (3, framecounter)  + ".tga")
                     framecount = framecount + everynthframe #advance to next frame
                     framecounter = framecounter + 1
-            output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
+            if filenames[0].find(".gif")>-1:
+                output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output.txt').readlines()) # compile using vtex.exe
+            else:
+                output = string.join(os.popen(r'vtex\vtex.exe -nopause vtex\materialsrc\vgui\logos\output000.tga').readlines()) # single frame
+            os.rename("vtex\\materials\\vgui\\logos\output000.vtf", "vtex\\materials\\vgui\\logos\output.vtf")
             #print output
             vtfpath="vtex\\materials\\vgui\\logos\\output.vtf"
 
