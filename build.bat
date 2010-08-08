@@ -1,5 +1,6 @@
 python setup.py py2exe
 del /q tga\*.tga
+del /q tga\*.gif
 del /q vtfcmd\*.tga
 del /q vtfcmd\*.dds
 del /q vtfcmd\*.vtf
