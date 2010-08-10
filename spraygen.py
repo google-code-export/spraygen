@@ -3,6 +3,8 @@ import pygtk
 import gtk
 import re
 import os
+import win32gui
+import win32con
 #import time
 import shutil
 import sys
@@ -23,11 +25,7 @@ transparency=1
 filenames=[""]
 filename2=""
 builder = gtk.Builder()
-filefilter = gtk.FileFilter() # file pattern filter for dialog
-filefilter.add_pattern("*.gif")
-filefilter.add_pattern("*.png")
-filefilter.add_pattern("*.tga")
-filefilter.add_pattern("*.jpg")
+filefilter="""Image Files\0*.gif;*.jpg;*.png;*.tga\0"""
 # debug logs
 #sys.stdout = open("spraygen.log", "w")
 #sys.stderr = open("spraygenerr.log", "w")
@@ -71,6 +69,8 @@ def createanimation():
             os.unlink("tga\\" + tganame)
         for file in filenames:
             os.popen("imagemagick\\convert \"" + file + "\" TGA\\output-" + str(frame) + ".tga") # output .tgas
+            print "imagemagick\\convert \"" + file + "\" TGA\\output-" + str(frame) + ".tga"
+            print os.getcwd()
             spliceleft = 0
             splicetop = 0
             background = ""
@@ -175,29 +175,27 @@ class mainwindow:
         combobox1.set_active(0)
 
     def importdialog(self, object):
-        global filefilter, filenames
-        fileopendialog = gtk.FileChooserDialog("Import", builder.get_object("window1"), gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-        fileopendialog.set_filter(filefilter)
-        fileopendialog.set_select_multiple(True)
-        response = fileopendialog.run()
-        if response == gtk.RESPONSE_OK:
-            filenames = fileopendialog.get_filenames()
-        elif response == gtk.RESPONSE_CANCEL:
+        global filefilter, filenames, workingdir
+        try:
+            filename, customfilter, flags=win32gui.GetOpenFileNameW(InitialDir=".", Flags=win32con.OFN_ALLOWMULTISELECT|win32con.OFN_EXPLORER, File='', DefExt='txt', Title='Import Image(s)', Filter=filefilter, FilterIndex=0)
+            filenames=filename.split("\0")
+            if len(filenames) > 1:
+                folder=filenames[0]
+                filenames.remove(folder)
+                for i in range(0,len(filenames)):
+                    filenames[i]=folder + "\\" + filenames[i]
+        except win32gui.error:
             pass
-        fileopendialog.destroy()
+        os.chdir(workingdir)
         self.fileselected(self)
             
     def importdialog2(self, object):
         global filefilter, filename2
-        fileopendialog = gtk.FileChooserDialog("Import 2nd frame", builder.get_object("window1"), gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-        fileopendialog.set_filter(filefilter)
-        fileopendialog.set_select_multiple(False)
-        response = fileopendialog.run()
-        if response == gtk.RESPONSE_OK:
-            filename2 = fileopendialog.get_filename()
-        elif response == gtk.RESPONSE_CANCEL:
+        try:
+            filename2, customfilter, flags=win32gui.GetOpenFileNameW(InitialDir=".", Flags=win32con.OFN_EXPLORER, File='', DefExt='txt', Title='Import Second Frame', Filter=filefilter, FilterIndex=0)
+        except win32gui.error:
             pass
-        fileopendialog.destroy()
+        os.chdir(workingdir)
         self.fileselected2(self)
 
     def fileselected(self, object):
@@ -623,17 +621,14 @@ class mainwindow:
             # launch explorer after installation to see how messy the game folder is
             os.spawnl(os.P_NOWAIT,"c:\windows\explorer.exe", "explorer", gamefolder)
         if savecheck:
-            chooser = gtk.FileChooserDialog("Save As",None,gtk.FILE_CHOOSER_ACTION_SAVE,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_SAVE,gtk.RESPONSE_OK))
-            chooser.set_current_name(vtfname)
-            filefilter1 = gtk.FileFilter() # file pattern filter for dialog
-            filefilter1.add_pattern("*.vtf")
-            chooser.set_filter(filefilter1)
-            response = chooser.run()
-            if response == gtk.RESPONSE_OK:
-                shutil.copy(vtfpath, chooser.get_filename())
-            elif response == gtk.RESPONSE_CANCEL:
+            filefilter2="""Spray Files\0*.vtf\0"""
+            try:
+                filename, customfilter, flags=win32gui.GetSaveFileNameW(InitialDir=".", Flags=win32con.OFN_EXPLORER, File='', DefExt='txt', Title='Save Spray', Filter=filefilter2, FilterIndex=0)
+                os.chdir(workingdir)
+                shutil.copy(vtfpath, filename)
+            except win32gui.error:
                 pass
-            chooser.destroy()
+            
 
 # show main window
 
