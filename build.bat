@@ -13,4 +13,5 @@ xcopy /e /y gtk\lib dist\lib\
 xcopy /e /y gtk\share dist\share\
 xcopy /e /y imagemagick dist\imagemagick\
 xcopy /e /y vtfcmd dist\vtfcmd\
+copy msvcr90.dll dist
 del dist\w9xpopen.exe
