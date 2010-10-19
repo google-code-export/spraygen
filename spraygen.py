@@ -14,7 +14,8 @@ from math import log
 
 steamfolder=""
 workingdir = os.getcwd()
-magicnumber = 180224 # max size for TGAs in VTF
+# magicnumber = 180224 # max size for TGAs in VTF
+magicnumber = 785000
 vtfwidth=0
 vtfheight=0
 filewidth=0
@@ -239,10 +240,10 @@ class mainwindow:
         # find nearest power of 2 for width and height
         vtfwidth = int(pow(2,round(log(filewidth,2))))
         vtfheight = int(pow(2,round(log(fileheight,2))))
-        if vtfwidth > 256:     # if height or width is bigger than 256, set them to 256
-            vtfwidth = 256
-        if vtfheight > 256:
-            vtfheight = 256
+        if vtfwidth > 512:     # if height or width is bigger than 512, set them to 512
+            vtfwidth = 512
+        if vtfheight > 512:
+            vtfheight = 512
         builder.get_object("height"+str(vtfheight)).set_active(1)   # push the radio buttons that correspond to the size
         builder.get_object("width"+str(vtfwidth)).set_active(1)
         builder.get_object("adjustment1").set_upper(fileframes)
@@ -328,21 +329,21 @@ class mainwindow:
         # exception here if they try to make it bigger than the original image dimensions.
         if vtfwidth > int(pow(2,round(log(filewidth,2)))):
             vtfwidth = int(pow(2,round(log(filewidth,2))))
-            if vtfwidth > 256:
-                vtfwidth = 256
+            if vtfwidth > 512:
+                vtfwidth = 512
             builder.get_object("width"+str(vtfwidth)).set_active(1)
         if vtfheight > int(pow(2,round(log(fileheight,2)))):
             vtfheight = int(pow(2,round(log(fileheight,2))))
-            if vtfheight > 256:
-                vtfheight = 256
+            if vtfheight > 512:
+                vtfheight = 512
             builder.get_object("height"+str(vtfheight)).set_active(1)
 
         if fade:
-            if vtfwidth > 256:
-                vtfwidth = 256
+            if vtfwidth > 512:
+                vtfwidth = 512
                 builder.get_object("width"+str(vtfwidth)).set_active(1)
-            if vtfheight > 256:
-                vtfheight = 256
+            if vtfheight > 512:
+                vtfheight = 512
                 builder.get_object("height"+str(vtfheight)).set_active(1)
 
         
